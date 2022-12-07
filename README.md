@@ -5,6 +5,7 @@
 |--|--|--|--|
 | /api/v1/auth/registration | POST | Register user | username, password, invite |
 | /api/v1/auth/login | POST | Login | username, password |
+| /api/v1/auth/generate_invite | GET | Generate invite token for authorized user |
 
 #### Authorized user posts control (required cookie)
 | Endpoint | Method | Task | Body/Query |
