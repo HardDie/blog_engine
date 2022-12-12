@@ -20,11 +20,11 @@ func NewAuth(service service.IAuth) *Auth {
 		service: service,
 	}
 }
-
 func (s *Auth) RegisterRouter(router *mux.Router) {
 	router.HandleFunc("/auth/register", s.Register).Methods(http.MethodPost)
 	router.HandleFunc("/auth/login", s.Login).Methods(http.MethodPost)
 }
+
 func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
 	req := &dto.RegisterDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
@@ -40,7 +40,14 @@ func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := s.service.Register(req)
+	user, err := s.service.Register(req)
+	if err != nil {
+		logger.Error.Printf(err.Error())
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
+
+	session, err := s.service.GenerateCookie(*user.ID)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -64,7 +71,14 @@ func (s *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := s.service.Login(req)
+	user, err := s.service.Login(req)
+	if err != nil {
+		logger.Error.Printf(err.Error())
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
+
+	session, err := s.service.GenerateCookie(*user.ID)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
