@@ -46,6 +46,7 @@ func Get() (*Application, error) {
 	userRepository := repository.NewUser(app.DB)
 	passwordRepository := repository.NewPassword(app.DB)
 	sessionRepository := repository.NewSession(app.DB)
+	inviteRepository := repository.NewInvite(app.DB)
 
 	// Register servers
 	server.NewAuth(
@@ -53,6 +54,12 @@ func Get() (*Application, error) {
 			userRepository,
 			passwordRepository,
 			sessionRepository,
+		),
+	).RegisterRouter(v1Router)
+	server.NewInvite(
+		service.NewInvite(
+			userRepository,
+			inviteRepository,
 		),
 	).RegisterRouter(v1Router)
 
