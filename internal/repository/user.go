@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/dimonrus/gosql"
+
 	"github.com/HardDie/blog_engine/internal/db"
 	"github.com/HardDie/blog_engine/internal/entity"
 )
@@ -24,14 +26,17 @@ func NewUser(db *db.DB) *User {
 }
 
 func (r *User) GetByName(name string) (*entity.User, error) {
-	user := &entity.User{}
+	user := &entity.User{
+		Username: &name,
+	}
 
-	row := r.db.DB.QueryRow(`
-SELECT id, username, displayed_name, email, invited_by_user, created_at, updated_at, deleted_at
-FROM users
-WHERE username = $1 AND deleted_at IS NULL`, name)
+	q := gosql.NewSelect().From("users")
+	q.Columns().Add("id", "displayed_name", "email", "invited_by_user", "created_at", "updated_at", "deleted_at")
+	q.Where().AddExpression("username = ?", name)
+	q.Where().AddExpression("deleted_at IS NULL")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 
-	err := row.Scan(&user.ID, &user.Username, &user.DisplayedName, &user.Email, &user.InvitedByUserID, &user.CreatedAt,
+	err := row.Scan(&user.ID, &user.DisplayedName, &user.Email, &user.InvitedByUserID, &user.CreatedAt,
 		&user.UpdatedAt, &user.DeletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -46,10 +51,11 @@ func (r *User) Create(name string) (*entity.User, error) {
 		Username: &name,
 	}
 
-	row := r.db.DB.QueryRow(`
-INSERT INTO users (username)
-VALUES ($1)
-RETURNING id, created_at, updated_at`, name)
+	q := gosql.NewInsert().Into("users")
+	q.Columns().Add("username")
+	q.Columns().Arg(name)
+	q.Returning().Add("id", "created_at", "updated_at")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 
 	err := row.Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {

@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/dimonrus/gosql"
+
 	"github.com/HardDie/blog_engine/internal/db"
 	"github.com/HardDie/blog_engine/internal/entity"
 )
@@ -29,10 +31,11 @@ func (r *Password) Create(userID int32, passwordHash string) (*entity.Password, 
 		PasswordHash: passwordHash,
 	}
 
-	row := r.db.DB.QueryRow(`
-INSERT INTO passwords (user_id, password_hash)
-VALUES ($1, $2)
-RETURNING id, created_at, updated_at`, userID, passwordHash)
+	q := gosql.NewInsert().Into("passwords")
+	q.Columns().Add("user_id", "password_hash")
+	q.Columns().Arg(userID, passwordHash)
+	q.Returning().Add("id", "created_at", "updated_at")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 
 	err := row.Scan(&password.ID, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
@@ -45,10 +48,11 @@ func (r *Password) GetByUserID(userID int32) (*entity.Password, error) {
 		UserID: userID,
 	}
 
-	row := r.db.DB.QueryRow(`
-SELECT id, password_hash, created_at, updated_at
-FROM passwords
-WHERE user_id = $1 AND deleted_at IS NULL`, userID)
+	q := gosql.NewSelect().From("passwords")
+	q.Columns().Add("id", "password_hash", "created_at", "updated_at")
+	q.Where().AddExpression("user_id = ?", userID)
+	q.Where().AddExpression("deleted_at IS NULL")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 
 	err := row.Scan(&password.ID, &password.PasswordHash, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {

@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/dimonrus/gosql"
+
 	"github.com/HardDie/blog_engine/internal/db"
 	"github.com/HardDie/blog_engine/internal/entity"
 )
@@ -31,10 +33,11 @@ func (r *Invite) GetByID(id int32) (*entity.Invite, error) {
 		ID: id,
 	}
 
-	row := r.db.DB.QueryRow(`
-SELECT user_id, invite_hash, is_activated, created_at, updated_at
-FROM invites
-WHERE id = $1 AND deleted_at IS NULL`, id)
+	q := gosql.NewSelect().From("invites")
+	q.Columns().Add("user_id", "invite_hash", "is_activated", "created_at", "updated_at")
+	q.Where().AddExpression("id = ?", id)
+	q.Where().AddExpression("deleted_at IS NULL")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 
 	err := row.Scan(&invite.UserID, &invite.InvitedHash, &invite.IsActivated, &invite.CreatedAt, &invite.UpdatedAt)
 	if err != nil {
@@ -51,10 +54,12 @@ func (r *Invite) GetActiveByUserID(userID int32) (*entity.Invite, error) {
 		IsActivated: false,
 	}
 
-	row := r.db.DB.QueryRow(`
-SELECT id, invite_hash, created_at, updated_at
-FROM invites
-WHERE user_id = $1 AND is_activated IS false AND deleted_at IS NULL`, userID)
+	q := gosql.NewSelect().From("invites")
+	q.Columns().Add("id", "invite_hash", "created_at", "updated_at")
+	q.Where().AddExpression("user_id = ?", userID)
+	q.Where().AddExpression("is_activated IS false")
+	q.Where().AddExpression("deleted_at IS NULL")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 
 	err := row.Scan(&invite.ID, &invite.InvitedHash, &invite.CreatedAt, &invite.UpdatedAt)
 	if err != nil {
@@ -66,10 +71,12 @@ WHERE user_id = $1 AND is_activated IS false AND deleted_at IS NULL`, userID)
 	return invite, nil
 }
 func (r *Invite) GetAllByUserID(userID int32) ([]*entity.Invite, error) {
-	rows, err := r.db.DB.Query(`
-SELECT id, invite_hash, created_at, updated_at
-FROM invites
-WHERE user_id = $1 AND deleted_at IS NULL`, userID)
+	q := gosql.NewSelect().From("invites")
+	q.Columns().Add("id", "invite_hash", "created_at", "updated_at")
+	q.Where().AddExpression("user_id = ?", userID)
+	q.Where().AddExpression("deleted_at IS NULL")
+
+	rows, err := r.db.DB.Query(q.String(), q.GetArguments()...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,11 +120,12 @@ func (r *Invite) CreateOrUpdate(userID int32, inviteHash string) (*entity.Invite
 	return invite, nil
 }
 func (r *Invite) Delete(id int32) error {
-	row := r.db.DB.QueryRow(`
-UPDATE invites
-SET deleted_at = datetime('now'), is_activated = true
-WHERE id = $1 AND deleted_at IS NULL
-RETURNING id`, id)
+	q := gosql.NewUpdate().Table("invites")
+	q.Set().Add("deleted_at = datetime('now')", "is_activated = true")
+	q.Where().AddExpression("id = ?", id)
+	q.Where().AddExpression("deleted_at IS NULL")
+	q.Returning().Add("id")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 
 	err := row.Scan(&id)
 	if err != nil {

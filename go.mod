@@ -3,6 +3,7 @@ module github.com/HardDie/blog_engine
 go 1.19
 
 require (
+	github.com/dimonrus/gosql v0.6.3
 	github.com/glebarez/go-sqlite v1.19.5
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
