@@ -8,6 +8,7 @@ import (
 
 	"github.com/HardDie/blog_engine/internal/logger"
 	"github.com/HardDie/blog_engine/internal/service"
+	"github.com/HardDie/blog_engine/internal/utils"
 )
 
 type Invite struct {
@@ -25,7 +26,9 @@ func (s *Invite) RegisterRouter(router *mux.Router) {
 }
 
 func (s *Invite) Generate(w http.ResponseWriter, r *http.Request) {
-	inviteCode, err := s.service.Generate(1)
+	userID := utils.GetUserIDFromContext(r.Context())
+
+	inviteCode, err := s.service.Generate(userID)
 	if err != nil {
 		logger.Error.Println("Error generating invite code:", err.Error())
 		http.Error(w, "Can't generate invite code", http.StatusInternalServerError)
@@ -37,7 +40,9 @@ func (s *Invite) Generate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func (s *Invite) Revoke(w http.ResponseWriter, r *http.Request) {
-	err := s.service.Revoke(1)
+	userID := utils.GetUserIDFromContext(r.Context())
+
+	err := s.service.Revoke(userID)
 	if err != nil {
 		logger.Error.Println("Error revoking invite code:", err.Error())
 		http.Error(w, "Can't revoke invite code", http.StatusInternalServerError)

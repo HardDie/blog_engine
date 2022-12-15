@@ -12,7 +12,7 @@ import (
 
 type IUser interface {
 	GetByName(name string) (*entity.User, error)
-	Create(name string) (*entity.User, error)
+	Create(name string, invitedByUserID int32) (*entity.User, error)
 }
 
 type User struct {
@@ -46,14 +46,15 @@ func (r *User) GetByName(name string) (*entity.User, error) {
 	}
 	return user, nil
 }
-func (r *User) Create(name string) (*entity.User, error) {
+func (r *User) Create(name string, invitedByUserID int32) (*entity.User, error) {
 	user := &entity.User{
-		Username: &name,
+		Username:        &name,
+		InvitedByUserID: &invitedByUserID,
 	}
 
 	q := gosql.NewInsert().Into("users")
-	q.Columns().Add("username")
-	q.Columns().Arg(name)
+	q.Columns().Add("username", "invited_by_user")
+	q.Columns().Arg(name, invitedByUserID)
 	q.Returning().Add("id", "created_at", "updated_at")
 	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 

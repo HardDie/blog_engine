@@ -16,6 +16,7 @@ type IInvite interface {
 	GetAllByUserID(userID int32) ([]*entity.Invite, error)
 	CreateOrUpdate(userID int32, inviteHash string) (*entity.Invite, error)
 	Delete(id int32) error
+	CheckIfExistAndDisable(inviteHash string) (*entity.Invite, error)
 }
 
 type Invite struct {
@@ -135,4 +136,26 @@ func (r *Invite) Delete(id int32) error {
 		return err
 	}
 	return nil
+}
+func (r *Invite) CheckIfExistAndDisable(inviteHash string) (*entity.Invite, error) {
+	invite := &entity.Invite{
+		InvitedHash: inviteHash,
+	}
+
+	q := gosql.NewUpdate().Table("invites")
+	q.Set().Add("is_activated = true")
+	q.Where().AddExpression("invite_hash = ?", inviteHash)
+	q.Where().AddExpression("is_activated IS false")
+	q.Where().AddExpression("deleted_at IS NULL")
+	q.Returning().Add("id", "user_id", "is_activated", "created_at", "updated_at")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+
+	err := row.Scan(&invite.ID, &invite.UserID, &invite.IsActivated, &invite.CreatedAt, &invite.UpdatedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("invite not exist")
+		}
+		return nil, err
+	}
+	return invite, nil
 }

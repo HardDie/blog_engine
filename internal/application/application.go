@@ -50,7 +50,7 @@ func Get() (*Application, error) {
 	inviteRepository := repository.NewInvite(app.DB)
 
 	// Init services
-	authService := service.NewAuth(userRepository, passwordRepository, sessionRepository)
+	authService := service.NewAuth(userRepository, passwordRepository, sessionRepository, inviteRepository)
 
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)

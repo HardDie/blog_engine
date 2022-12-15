@@ -9,7 +9,7 @@ import (
 
 type ISession interface {
 	CreateOrUpdate(userID int32, sessionHash string) (*entity.Session, error)
-	GetUserID(sessionHash string) (*int, error)
+	GetUserID(sessionHash string) (*int32, error)
 }
 
 type Session struct {
@@ -41,8 +41,8 @@ RETURNING id, created_at, updated_at`, userID, sessionHash)
 	}
 	return session, nil
 }
-func (r *Session) GetUserID(sessionHash string) (*int, error) {
-	var userID int
+func (r *Session) GetUserID(sessionHash string) (*int32, error) {
+	var userID int32
 
 	q := gosql.NewSelect().From("sessions")
 	q.Columns().Add("user_id")
