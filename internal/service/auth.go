@@ -13,6 +13,7 @@ type IAuth interface {
 	Register(req *dto.RegisterDTO) (*entity.User, error)
 	Login(req *dto.LoginDTO) (*entity.User, error)
 	GenerateCookie(userID int32) (string, error)
+	ValidateCookie(session string) (*int, error)
 }
 
 type Auth struct {
@@ -111,4 +112,12 @@ func (s *Auth) GenerateCookie(userID int32) (string, error) {
 	}
 
 	return sessionKey, nil
+}
+func (s *Auth) ValidateCookie(session string) (*int, error) {
+	sessionHash := utils.HashSha256(session)
+	userID, err := s.sessionRepository.GetUserID(sessionHash)
+	if err != nil {
+		return nil, err
+	}
+	return userID, nil
 }

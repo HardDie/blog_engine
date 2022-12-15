@@ -1,12 +1,15 @@
 package repository
 
 import (
+	"github.com/dimonrus/gosql"
+
 	"github.com/HardDie/blog_engine/internal/db"
 	"github.com/HardDie/blog_engine/internal/entity"
 )
 
 type ISession interface {
 	CreateOrUpdate(userID int32, sessionHash string) (*entity.Session, error)
+	GetUserID(sessionHash string) (*int, error)
 }
 
 type Session struct {
@@ -37,4 +40,19 @@ RETURNING id, created_at, updated_at`, userID, sessionHash)
 		return nil, err
 	}
 	return session, nil
+}
+func (r *Session) GetUserID(sessionHash string) (*int, error) {
+	var userID int
+
+	q := gosql.NewSelect().From("sessions")
+	q.Columns().Add("user_id")
+	q.Where().AddExpression("session_hash = ?", sessionHash)
+	q.Where().AddExpression("deleted_at IS NULL")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+
+	err := row.Scan(&userID)
+	if err != nil {
+		return nil, err
+	}
+	return &userID, nil
 }

@@ -20,8 +20,8 @@ func NewInvite(service service.IInvite) *Invite {
 	}
 }
 func (s *Invite) RegisterRouter(router *mux.Router) {
-	router.HandleFunc("/invite/generate", s.Generate).Methods(http.MethodGet)
-	router.HandleFunc("/invite/revoke", s.Revoke).Methods(http.MethodDelete)
+	router.HandleFunc("/generate", s.Generate).Methods(http.MethodGet)
+	router.HandleFunc("/revoke", s.Revoke).Methods(http.MethodDelete)
 }
 
 func (s *Invite) Generate(w http.ResponseWriter, r *http.Request) {

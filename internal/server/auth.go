@@ -21,8 +21,8 @@ func NewAuth(service service.IAuth) *Auth {
 	}
 }
 func (s *Auth) RegisterRouter(router *mux.Router) {
-	router.HandleFunc("/auth/register", s.Register).Methods(http.MethodPost)
-	router.HandleFunc("/auth/login", s.Login).Methods(http.MethodPost)
+	router.HandleFunc("/register", s.Register).Methods(http.MethodPost)
+	router.HandleFunc("/login", s.Login).Methods(http.MethodPost)
 }
 
 func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {

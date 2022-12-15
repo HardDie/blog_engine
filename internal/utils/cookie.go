@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+
+	"github.com/HardDie/blog_engine/internal/logger"
 )
 
 func SetSessionCookie(session string, w http.ResponseWriter) {
@@ -15,6 +17,15 @@ func SetSessionCookie(session string, w http.ResponseWriter) {
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
+}
+
+func GetCookie(r *http.Request) *http.Cookie {
+	cookie, err := r.Cookie("session")
+	if err != nil {
+		logger.Error.Println("Can't read cookie from request:", err.Error())
+		return nil
+	}
+	return cookie
 }
 
 func GenerateSessionKey() (string, error) {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/HardDie/blog_engine/internal/config"
 	"github.com/HardDie/blog_engine/internal/db"
+	"github.com/HardDie/blog_engine/internal/middleware"
 	"github.com/HardDie/blog_engine/internal/migration"
 	"github.com/HardDie/blog_engine/internal/repository"
 	"github.com/HardDie/blog_engine/internal/server"
@@ -48,20 +49,25 @@ func Get() (*Application, error) {
 	sessionRepository := repository.NewSession(app.DB)
 	inviteRepository := repository.NewInvite(app.DB)
 
+	// Init services
+	authService := service.NewAuth(userRepository, passwordRepository, sessionRepository)
+
+	// Middleware
+	authMiddleware := middleware.NewAuthMiddleware(authService)
+
 	// Register servers
-	server.NewAuth(
-		service.NewAuth(
-			userRepository,
-			passwordRepository,
-			sessionRepository,
-		),
-	).RegisterRouter(v1Router)
+	authRouter := v1Router.PathPrefix("/auth").Subrouter()
+	server.NewAuth(authService).
+		RegisterRouter(authRouter)
+
+	inviteRouter := v1Router.PathPrefix("/invite").Subrouter()
+	inviteRouter.Use(authMiddleware.RequestMiddleware)
 	server.NewInvite(
 		service.NewInvite(
 			userRepository,
 			inviteRepository,
 		),
-	).RegisterRouter(v1Router)
+	).RegisterRouter(inviteRouter)
 
 	return app, nil
 }
