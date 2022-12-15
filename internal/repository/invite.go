@@ -13,10 +13,11 @@ import (
 type IInvite interface {
 	GetByID(id int32) (*entity.Invite, error)
 	GetActiveByUserID(userID int32) (*entity.Invite, error)
+	GetByInviteHash(inviteHash string) (*entity.Invite, error)
 	GetAllByUserID(userID int32) ([]*entity.Invite, error)
 	CreateOrUpdate(userID int32, inviteHash string) (*entity.Invite, error)
 	Delete(id int32) error
-	CheckIfExistAndDisable(inviteHash string) (*entity.Invite, error)
+	Activate(id int32) (*entity.Invite, error)
 }
 
 type Invite struct {
@@ -101,6 +102,27 @@ func (r *Invite) GetAllByUserID(userID int32) ([]*entity.Invite, error) {
 
 	return resp, nil
 }
+func (r *Invite) GetByInviteHash(inviteHash string) (*entity.Invite, error) {
+	invite := &entity.Invite{
+		InvitedHash: inviteHash,
+	}
+
+	q := gosql.NewSelect().From("invites")
+	q.Columns().Add("id", "user_id", "is_activated", "created_at", "updated_at")
+	q.Where().AddExpression("invite_hash = ?", inviteHash)
+	q.Where().AddExpression("is_activated IS false")
+	q.Where().AddExpression("deleted_at IS NULL")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+
+	err := row.Scan(&invite.ID, &invite.UserID, &invite.IsActivated, &invite.CreatedAt, &invite.UpdatedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("invite not exist")
+		}
+		return nil, err
+	}
+	return invite, nil
+}
 func (r *Invite) CreateOrUpdate(userID int32, inviteHash string) (*entity.Invite, error) {
 	invite := &entity.Invite{
 		UserID:      userID,
@@ -137,20 +159,20 @@ func (r *Invite) Delete(id int32) error {
 	}
 	return nil
 }
-func (r *Invite) CheckIfExistAndDisable(inviteHash string) (*entity.Invite, error) {
+func (r *Invite) Activate(id int32) (*entity.Invite, error) {
 	invite := &entity.Invite{
-		InvitedHash: inviteHash,
+		ID: id,
 	}
 
 	q := gosql.NewUpdate().Table("invites")
 	q.Set().Add("is_activated = true")
-	q.Where().AddExpression("invite_hash = ?", inviteHash)
+	q.Where().AddExpression("id = ?", id)
 	q.Where().AddExpression("is_activated IS false")
 	q.Where().AddExpression("deleted_at IS NULL")
-	q.Returning().Add("id", "user_id", "is_activated", "created_at", "updated_at")
+	q.Returning().Add("user_id", "invite_hash", "is_activated", "created_at", "updated_at")
 	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 
-	err := row.Scan(&invite.ID, &invite.UserID, &invite.IsActivated, &invite.CreatedAt, &invite.UpdatedAt)
+	err := row.Scan(&invite.UserID, &invite.InvitedHash, &invite.IsActivated, &invite.CreatedAt, &invite.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errors.New("invite not exist")

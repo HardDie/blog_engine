@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/HardDie/blog_engine/internal/dto"
@@ -23,6 +24,8 @@ type Auth struct {
 	passwordRepository repository.IPassword
 	sessionRepository  repository.ISession
 	inviteRepository   repository.IInvite
+
+	mutex sync.Mutex
 }
 
 func NewAuth(user repository.IUser, password repository.IPassword,
@@ -36,22 +39,18 @@ func NewAuth(user repository.IUser, password repository.IPassword,
 }
 
 func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
-	// Check if such user already exist
-	user, err := s.userRepository.GetByName(*req.Username)
-	if err != nil {
-		return nil, err
-	}
-	if user != nil {
-		return nil, fmt.Errorf("user already exist")
-	}
+	s.mutex.Lock()
+	defer func() {
+		s.mutex.Unlock()
+	}()
 
 	// Hashing invite
 	hashInvite := utils.HashSha256(*req.Invite)
 
-	// Validating invite
-	invite, err := s.inviteRepository.CheckIfExistAndDisable(hashInvite)
+	// Check if invite exist
+	invite, err := s.inviteRepository.GetByInviteHash(hashInvite)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while trying get invite: %w", err)
 	}
 	if invite == nil {
 		return nil, fmt.Errorf("can't find such invite")
@@ -64,6 +63,21 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 			logger.Error.Printf("Can't delete expired invite [%d]: %v", invite.ID, err.Error())
 		}
 		return nil, fmt.Errorf("invite has expired")
+	}
+
+	// Check if username is not busy
+	user, err := s.userRepository.GetByName(*req.Username)
+	if err != nil {
+		return nil, fmt.Errorf("error while trying get user: %w", err)
+	}
+	if user != nil {
+		return nil, fmt.Errorf("username already exist")
+	}
+
+	// Activating invite
+	invite, err = s.inviteRepository.Activate(invite.ID)
+	if err != nil || invite == nil {
+		return nil, fmt.Errorf("error while activating invite: %w", err)
 	}
 
 	// Hashing password
@@ -82,18 +96,6 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 	_, err = s.passwordRepository.Create(*user.ID, hashPassword)
 	if err != nil {
 		return nil, err
-	}
-
-	// Generate session key
-	sessionKey, err := utils.GenerateSessionKey()
-	if err != nil {
-		return nil, fmt.Errorf("generate session key: %w", err)
-	}
-
-	// Write session to DB
-	_, err = s.sessionRepository.CreateOrUpdate(*user.ID, utils.HashSha256(sessionKey))
-	if err != nil {
-		return nil, fmt.Errorf("write session to DB: %w", err)
 	}
 
 	return user, nil
