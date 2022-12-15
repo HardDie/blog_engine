@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS invites (
     deleted_at   TIMESTAMP
 );
 CREATE UNIQUE INDEX invites_user_id_is_activated_uidx ON invites (user_id, is_activated) WHERE is_activated IS FALSE;
+-- 00000000-0000-0000-0000-000000000000 invite id for the first user
+INSERT INTO invites (id, user_id, invite_hash) VALUES (0, 0, 'Erk3fL5-XJTopw2dI5KVI9FK-pVHkxMPijlZx7hJrKg=');
 -- +goose StatementEnd
 
 -- +goose Down

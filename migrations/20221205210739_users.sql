@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at      TIMESTAMP NOT NULL DEFAULT (datetime('now')),
     deleted_at      TIMESTAMP
 );
+INSERT INTO users (id, username) VALUES (0, 'root');
 -- +goose StatementEnd
 
 -- +goose Down
