@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/HardDie/blog_engine/internal/service"
@@ -30,7 +31,11 @@ func (m *AuthMiddleware) RequestMiddleware(next http.Handler) http.Handler {
 		// Validate if cookie is active
 		userID, err := m.authService.ValidateCookie(cookie.Value)
 		if err != nil || userID == nil {
-			http.Error(w, "Invalid session", http.StatusBadRequest)
+			if errors.Is(err, service.ErrorSessionHasExpired) {
+				http.Error(w, "Session has expired", http.StatusUnauthorized)
+			} else {
+				http.Error(w, "Invalid session", http.StatusUnauthorized)
+			}
 			return
 		}
 

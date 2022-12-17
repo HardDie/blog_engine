@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -10,6 +11,10 @@ import (
 	"github.com/HardDie/blog_engine/internal/logger"
 	"github.com/HardDie/blog_engine/internal/repository"
 	"github.com/HardDie/blog_engine/internal/utils"
+)
+
+var (
+	ErrorSessionHasExpired = errors.New("session has expired")
 )
 
 type IAuth interface {
@@ -141,11 +146,17 @@ func (s *Auth) GenerateCookie(userID int32) (string, error) {
 
 	return sessionKey, nil
 }
-func (s *Auth) ValidateCookie(session string) (*int32, error) {
-	sessionHash := utils.HashSha256(session)
-	userID, err := s.sessionRepository.GetUserID(sessionHash)
+func (s *Auth) ValidateCookie(sessionToken string) (*int32, error) {
+	// Check if session exist
+	sessionHash := utils.HashSha256(sessionToken)
+	session, err := s.sessionRepository.GetByUserID(sessionHash)
 	if err != nil {
 		return nil, err
 	}
-	return userID, nil
+
+	// Check if session is not expired
+	if time.Now().Sub(session.UpdatedAt) > time.Hour*24 {
+		return nil, ErrorSessionHasExpired
+	}
+	return &session.UserID, nil
 }

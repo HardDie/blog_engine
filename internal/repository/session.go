@@ -9,7 +9,7 @@ import (
 
 type ISession interface {
 	CreateOrUpdate(userID int32, sessionHash string) (*entity.Session, error)
-	GetUserID(sessionHash string) (*int32, error)
+	GetByUserID(sessionHash string) (*entity.Session, error)
 }
 
 type Session struct {
@@ -41,18 +41,20 @@ RETURNING id, created_at, updated_at`, userID, sessionHash)
 	}
 	return session, nil
 }
-func (r *Session) GetUserID(sessionHash string) (*int32, error) {
-	var userID int32
+func (r *Session) GetByUserID(sessionHash string) (*entity.Session, error) {
+	session := &entity.Session{
+		SessionHash: sessionHash,
+	}
 
 	q := gosql.NewSelect().From("sessions")
-	q.Columns().Add("user_id")
+	q.Columns().Add("id", "user_id", "created_at", "updated_at")
 	q.Where().AddExpression("session_hash = ?", sessionHash)
 	q.Where().AddExpression("deleted_at IS NULL")
 	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 
-	err := row.Scan(&userID)
+	err := row.Scan(&session.ID, &session.UserID, &session.CreatedAt, &session.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
-	return &userID, nil
+	return session, nil
 }
