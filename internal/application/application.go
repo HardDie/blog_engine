@@ -48,6 +48,7 @@ func Get() (*Application, error) {
 	passwordRepository := repository.NewPassword(app.DB)
 	sessionRepository := repository.NewSession(app.DB)
 	inviteRepository := repository.NewInvite(app.DB)
+	postRepository := repository.NewPost(app.DB)
 
 	// Init services
 	authService := service.NewAuth(userRepository, passwordRepository, sessionRepository, inviteRepository)
@@ -58,16 +59,24 @@ func Get() (*Application, error) {
 	// Register servers
 	authRouter := v1Router.PathPrefix("/auth").Subrouter()
 	server.NewAuth(authService).
-		RegisterRouter(authRouter)
+		RegisterPublicRouter(authRouter)
 
-	inviteRouter := v1Router.PathPrefix("/invite").Subrouter()
-	inviteRouter.Use(authMiddleware.RequestMiddleware)
+	inviteRouter := v1Router.PathPrefix("/invites").Subrouter()
 	server.NewInvite(
 		service.NewInvite(
 			userRepository,
 			inviteRepository,
 		),
-	).RegisterRouter(inviteRouter)
+	).RegisterPrivateRouter(inviteRouter, authMiddleware.RequestMiddleware)
+
+	postsRouter := v1Router.PathPrefix("/posts").Subrouter()
+	postServer := server.NewPost(
+		service.NewPost(
+			postRepository,
+		),
+	)
+	postServer.RegisterPublicRouter(postsRouter)
+	postServer.RegisterPrivateRouter(postsRouter, authMiddleware.RequestMiddleware)
 
 	return app, nil
 }
