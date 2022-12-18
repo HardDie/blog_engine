@@ -1,26 +1,26 @@
 # API's
 
 #### Login/registration user
-| Endpoint | Method | Task | Body/Query |
-|--|--|--|--|
-| /api/v1/auth/register | POST | Register user | username, password, invite |
-| /api/v1/auth/login | POST | Login | username, password |
+| Endpoint | Method | Task | Body/Query | Implemented |
+|--|--|--|--|--|
+| /api/v1/auth/register | POST | Register user | username, password, invite | + |
+| /api/v1/auth/login | POST | Login | username, password | + |
 
 #### Authorized user posts control (required cookie)
-| Endpoint | Method | Task | Body/Query |
-|--|--|--|--|
-| /api/v1/invites/generate | GET | Generate invite token |
-| /api/v1/invites/revoke | DELETE | Revoke generated invite token |
+| Endpoint | Method | Task | Body/Query | Implemented |
+|--|--|--|--|--|
+| /api/v1/invites/generate | GET | Generate invite token | | + |
+| /api/v1/invites/revoke | DELETE | Revoke generated invite token | | + |
 | /api/v1/users/:id | PATCH | Update user info | password, displayed_name, email, image |
-| /api/v1/posts | POST | Create post | title, short, long |
+| /api/v1/posts | POST | Create post | title, short, long | + |
 | /api/v1/posts | GET | Get list of posts for authorized user | title, short, long |
 | /api/v1/posts/:id | PUT | Edit post | title, short, long |
 | /api/v1/users/:id/posts | GET | Get list of all posts selected user | page, limit, published, deleted |
 
 #### Common RO user api's
-| Endpoint | Method | Task | Body/Query |
-|--|--|--|--|
-| /api/v1/posts/feed | GET | Get list of all posts from all users (main page) | page, limit, query |
+| Endpoint | Method | Task | Body/Query | Implemented |
+|--|--|--|--|--|
+| /api/v1/posts/feed | GET | Get list of all posts from all users (main page) | page, limit, query | + |
 | /api/v1/posts/:id | GET | Get full post |
 | /api/v1/users | GET | Get list of all users with short information | query |
 | /api/v1/users/:id | GET | Get full information about selected user |
@@ -34,22 +34,22 @@
 Post:
 ```go
 struct Post {
-	ID int
-	UserID int
+	ID int32
+	UserID int32
+	Title string
 	Short string
 	Body string
-	Tags string
+	Tags []string
 	IsPublished bool
-	IsDeleted bool
 }
 ```
 
 Comment:
 ```go
 struct Comment {
-	ID int
-	UserID int
-	PostID int
+	ID int32
+	UserID int32
+	PostID int32
 	Text string
 }
 ```
@@ -57,11 +57,10 @@ struct Comment {
 User:
 ```go
 struct User {
-	ID int
-	Name string
+	ID int32
+	Username string
 	DisplayedName string
 	Email string
-	Password string
 	InvitedByUser int
 }
 ```
@@ -69,10 +68,10 @@ struct User {
 Invite:
 ```go
 struct InviteUser {
-	ID int
-	UserID int
-	InviteCode string
-	IsUsed bool
+	ID int32
+	UserID int32
+	InviteHash string
+	IsActivated bool
 }
 ```
 
