@@ -27,6 +27,28 @@ func (s *Invite) RegisterPrivateRouter(router *mux.Router, middleware ...mux.Mid
 	inviteRouter.Use(middleware...)
 }
 
+// swagger:parameters InviteGenerateRequest
+type InviteGenerateRequest struct {
+}
+
+// swagger:response InviteGenerateResponse
+type InviteGenerateResponse struct {
+}
+
+// swagger:route GET /api/v1/invites/generate Invite InviteGenerateRequest
+//
+// Generate new invite code
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+//	Schemes: https
+//
+//	Responses:
+//	  200: InviteGenerateResponse
 func (s *Invite) Generate(w http.ResponseWriter, r *http.Request) {
 	userID := utils.GetUserIDFromContext(r.Context())
 
@@ -41,6 +63,29 @@ func (s *Invite) Generate(w http.ResponseWriter, r *http.Request) {
 		logger.Error.Println("Error sending response:", err.Error())
 	}
 }
+
+// swagger:parameters InviteRevokeRequest
+type InviteRevokeRequest struct {
+}
+
+// swagger:response InviteRevokeResponse
+type InviteRevokeResponse struct {
+}
+
+// swagger:route DELETE /api/v1/invites/revoke Invite InviteRevokeRequest
+//
+// Revoke generated invite code
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+//	Schemes: https
+//
+//	Responses:
+//	  200: InviteRevokeResponse
 func (s *Invite) Revoke(w http.ResponseWriter, r *http.Request) {
 	userID := utils.GetUserIDFromContext(r.Context())
 

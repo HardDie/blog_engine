@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/HardDie/blog_engine/internal/dto"
+	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
 	"github.com/HardDie/blog_engine/internal/service"
 	"github.com/HardDie/blog_engine/internal/utils"
@@ -30,6 +31,36 @@ func (s *Post) RegisterPrivateRouter(router *mux.Router, middleware ...mux.Middl
 	postRouter.Use(middleware...)
 }
 
+// swagger:parameters PostFeedRequest
+type PostFeedRequest struct {
+	// In: body
+	Body struct {
+		dto.FeedPostDTO
+	}
+}
+
+// swagger:response PostFeedResponse
+type PostFeedResponse struct {
+	// In: body
+	Body struct {
+		Data []*entity.Post `json:"data"`
+	}
+}
+
+// swagger:route GET /api/v1/posts/feed Post PostFeedRequest
+//
+// Get feed
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+//	Schemes: https
+//
+//	Responses:
+//	  200: PostFeedResponse
 func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 	req := &dto.FeedPostDTO{
 		Limit: utils.GetInt32FromQuery(r, "limit", 0),
@@ -55,6 +86,36 @@ func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// swagger:parameters PostCreateRequest
+type PostCreateRequest struct {
+	// In: body
+	Body struct {
+		dto.CreatePostDTO
+	}
+}
+
+// swagger:response PostCreateResponse
+type PostCreateResponse struct {
+	// In: body
+	Body struct {
+		Data *entity.Post `json:"data"`
+	}
+}
+
+// swagger:route POST /api/v1/posts Post PostCreateRequest
+//
+// Create post form
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+//	Schemes: https
+//
+//	Responses:
+//	  200: PostCreateResponse
 func (s *Post) Create(w http.ResponseWriter, r *http.Request) {
 	userID := utils.GetUserIDFromContext(r.Context())
 

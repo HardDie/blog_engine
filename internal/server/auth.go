@@ -26,6 +26,32 @@ func (s *Auth) RegisterPublicRouter(router *mux.Router) {
 	authRouter.HandleFunc("/login", s.Login).Methods(http.MethodPost)
 }
 
+// swagger:parameters AuthRegisterRequest
+type AuthRegisterRequest struct {
+	// In: body
+	Body struct {
+		dto.RegisterDTO
+	}
+}
+
+// swagger:response AuthRegisterResponse
+type AuthRegisterResponse struct {
+}
+
+// swagger:route POST /api/v1/auth/register Auth AuthRegisterRequest
+//
+// Registration form
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+//	Schemes: https
+//
+//	Responses:
+//	  200: AuthRegisterResponse
 func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
 	req := &dto.RegisterDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
@@ -57,6 +83,33 @@ func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
 
 	utils.SetSessionCookie(session, w)
 }
+
+// swagger:parameters AuthLoginRequest
+type AuthLoginRequest struct {
+	// In: body
+	Body struct {
+		dto.LoginDTO
+	}
+}
+
+// swagger:response AuthLoginResponse
+type AuthLoginResponse struct {
+}
+
+// swagger:route POST /api/v1/auth/login Auth AuthLoginRequest
+//
+// Login form
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+//	Schemes: https
+//
+//	Responses:
+//	  200: AuthLoginResponse
 func (s *Auth) Login(w http.ResponseWriter, r *http.Request) {
 	req := &dto.LoginDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)

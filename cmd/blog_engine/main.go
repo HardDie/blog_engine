@@ -1,3 +1,30 @@
+// Package main Blog Engine.
+//
+// Entry point for the application.
+//
+// Terms Of Service:
+//
+//	Schemes: http
+//	Host: localhost:8080
+//	BasePath: /
+//	Version: 1.0.0
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+//	Security:
+//	- token:
+//
+//	SecurityDefinitions:
+//	token:
+//	     type: apiKey
+//	     name: Cookie
+//	     in: header
+//
+// swagger:meta
 package main
 
 import (
