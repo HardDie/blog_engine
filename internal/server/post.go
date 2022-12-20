@@ -211,7 +211,6 @@ func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	err = utils.Response(w, post)
 	if err != nil {
 		logger.Error.Println(err.Error())

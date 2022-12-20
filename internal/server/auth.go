@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/HardDie/blog_engine/internal/dto"
+	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
 	"github.com/HardDie/blog_engine/internal/service"
 	"github.com/HardDie/blog_engine/internal/utils"
@@ -24,6 +25,11 @@ func (s *Auth) RegisterPublicRouter(router *mux.Router) {
 	authRouter := router.PathPrefix("").Subrouter()
 	authRouter.HandleFunc("/register", s.Register).Methods(http.MethodPost)
 	authRouter.HandleFunc("/login", s.Login).Methods(http.MethodPost)
+}
+func (s *Auth) RegisterPrivateRouter(router *mux.Router, middleware ...mux.MiddlewareFunc) {
+	authRouter := router.PathPrefix("").Subrouter()
+	authRouter.HandleFunc("/user", s.User).Methods(http.MethodGet)
+	authRouter.Use(middleware...)
 }
 
 // swagger:parameters AuthRegisterRequest
@@ -140,4 +146,46 @@ func (s *Auth) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SetSessionCookie(session, w)
+}
+
+// swagger:parameters AuthUserRequest
+type AuthUserRequest struct {
+}
+
+// swagger:response AuthUserResponse
+type AuthUserResponse struct {
+	// In: body
+	Body struct {
+		Data *entity.User `json:"data"`
+	}
+}
+
+// swagger:route GET /api/v1/auth/user Auth AuthUserRequest
+//
+// Getting information about the current user
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+//	Schemes: https
+//
+//	Responses:
+//	  200: AuthUserResponse
+func (s *Auth) User(w http.ResponseWriter, r *http.Request) {
+	userID := utils.GetUserIDFromContext(r.Context())
+
+	user, err := s.service.GetUserInfo(userID)
+	if err != nil {
+		logger.Error.Printf(err.Error())
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
+
+	err = utils.Response(w, user)
+	if err != nil {
+		logger.Error.Println(err.Error())
+	}
 }

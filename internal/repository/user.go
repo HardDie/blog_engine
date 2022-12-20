@@ -11,6 +11,7 @@ import (
 )
 
 type IUser interface {
+	GetByID(id int32) (*entity.User, error)
 	GetByName(name string) (*entity.User, error)
 	Create(name string, invitedByUserID int32) (*entity.User, error)
 }
@@ -25,6 +26,28 @@ func NewUser(db *db.DB) *User {
 	}
 }
 
+func (r *User) GetByID(id int32) (*entity.User, error) {
+	user := &entity.User{
+		ID: &id,
+	}
+
+	q := gosql.NewSelect().From("users")
+	q.Columns().Add("username", "displayed_name", "email", "invited_by_user", "created_at", "updated_at", "deleted_at")
+	q.Where().AddExpression("id = ?", id)
+	q.Where().AddExpression("deleted_at IS NULL")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+
+	err := row.Scan(&user.Username, &user.DisplayedName, &user.Email, &user.InvitedByUserID, &user.CreatedAt,
+		&user.UpdatedAt, &user.DeletedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return user, nil
+
+}
 func (r *User) GetByName(name string) (*entity.User, error) {
 	user := &entity.User{
 		Username: &name,

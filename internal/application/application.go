@@ -58,8 +58,9 @@ func Get() (*Application, error) {
 
 	// Register servers
 	authRouter := v1Router.PathPrefix("/auth").Subrouter()
-	server.NewAuth(authService).
-		RegisterPublicRouter(authRouter)
+	authServer := server.NewAuth(authService)
+	authServer.RegisterPublicRouter(authRouter)
+	authServer.RegisterPrivateRouter(authRouter, authMiddleware.RequestMiddleware)
 
 	inviteRouter := v1Router.PathPrefix("/invites").Subrouter()
 	server.NewInvite(

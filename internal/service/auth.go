@@ -22,6 +22,7 @@ type IAuth interface {
 	Login(req *dto.LoginDTO) (*entity.User, error)
 	GenerateCookie(userID int32) (string, error)
 	ValidateCookie(session string) (*int32, error)
+	GetUserInfo(userID int32) (*entity.User, error)
 }
 
 type Auth struct {
@@ -159,4 +160,7 @@ func (s *Auth) ValidateCookie(sessionToken string) (*int32, error) {
 		return nil, ErrorSessionHasExpired
 	}
 	return &session.UserID, nil
+}
+func (s *Auth) GetUserInfo(userID int32) (*entity.User, error) {
+	return s.userRepository.GetByID(userID)
 }
