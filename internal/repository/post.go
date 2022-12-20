@@ -39,6 +39,9 @@ func (r *Post) List(filter *dto.ListPostFilter) ([]*entity.Post, error) {
 	//if filter.Query != "" {
 	//	q.Where().AddExpression("lower(title) LIKE %?%", strings.ToLower(filter.Query))
 	//}
+	if filter.RelatedToUser > 0 {
+		q.Where().AddExpression("user_id = ?", filter.RelatedToUser)
+	}
 	if filter.Limit > 0 {
 		q.SetPagination(utils.GetPagination(filter.Limit, filter.Page))
 	}

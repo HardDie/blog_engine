@@ -11,6 +11,7 @@ type IPost interface {
 
 	Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
 	Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error)
+	List(req *dto.ListPostDTO, userID int32) ([]*entity.Post, error)
 }
 
 type Post struct {
@@ -37,4 +38,13 @@ func (p *Post) Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error
 }
 func (p *Post) Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
 	return p.repository.Edit(req, userID)
+}
+func (p *Post) List(req *dto.ListPostDTO, userID int32) ([]*entity.Post, error) {
+	return p.repository.List(&dto.ListPostFilter{
+		Limit:                req.Limit,
+		Page:                 req.Page,
+		Query:                req.Query,
+		RelatedToUser:        userID,
+		DisplayOnlyPublished: false,
+	})
 }

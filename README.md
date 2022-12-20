@@ -13,9 +13,8 @@
 | /api/v1/invites/revoke | DELETE | Revoke generated invite token | | + |
 | /api/v1/users/:id | PATCH | Update user info | password, displayed_name, email, image |
 | /api/v1/posts | POST | Create post | title, short, body, tags, is_publised | + |
-| /api/v1/posts | GET | Get list of posts for authorized user | title, short, body |
+| /api/v1/posts | GET | Get list of posts for authorized user | limit, page, query | + |
 | /api/v1/posts/:id | PUT | Edit post | title, short, body, tags, is_published | + |
-| /api/v1/users/:id/posts | GET | Get list of all posts selected user | page, limit, published, deleted |
 
 #### Common RO user api's
 | Endpoint | Method | Task | Body/Query | Implemented |

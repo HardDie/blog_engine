@@ -49,6 +49,7 @@ type ListPostFilter struct {
 	Limit                int32
 	Page                 int32
 	Query                string
+	RelatedToUser        int32
 	DisplayOnlyPublished bool
 }
 
@@ -73,6 +74,25 @@ func (p *EditPostDTO) Validate() error {
 	}
 	if p.Body == "" {
 		return fmt.Errorf("body can't be empty")
+	}
+	return nil
+}
+
+type ListPostDTO struct {
+	Limit int32  `json:"limit"`
+	Page  int32  `json:"page"`
+	Query string `json:"query"`
+}
+
+func (d *ListPostDTO) Validate() error {
+	if d == nil {
+		return nil
+	}
+	if d.Limit < 0 {
+		return fmt.Errorf("limit can't be less than 0")
+	}
+	if d.Page < 0 {
+		return fmt.Errorf("page can't be less than 0")
 	}
 	return nil
 }

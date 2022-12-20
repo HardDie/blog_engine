@@ -29,15 +29,14 @@ func (s *Post) RegisterPrivateRouter(router *mux.Router, middleware ...mux.Middl
 	postRouter := router.PathPrefix("").Subrouter()
 	postRouter.HandleFunc("", s.Create).Methods(http.MethodPost)
 	postRouter.HandleFunc("/{id:[0-9]+}", s.Edit).Methods(http.MethodPut)
+	postRouter.HandleFunc("", s.List).Methods(http.MethodGet)
 	postRouter.Use(middleware...)
 }
 
 // swagger:parameters PostFeedRequest
 type PostFeedRequest struct {
-	// In: body
-	Body struct {
-		dto.FeedPostDTO
-	}
+	// In: query
+	dto.FeedPostDTO
 }
 
 // swagger:response PostFeedResponse
@@ -212,6 +211,61 @@ func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = utils.Response(w, post)
+	if err != nil {
+		logger.Error.Println(err.Error())
+	}
+}
+
+// swagger:parameters PostListRequest
+type PostListRequest struct {
+	// In: query
+	dto.ListPostDTO
+}
+
+// swagger:response PostListResponse
+type PostListResponse struct {
+	// In: body
+	Body struct {
+		Data []*entity.Post `json:"data"`
+	}
+}
+
+// swagger:route GET /api/v1/posts Post PostListRequest
+//
+// Get list of posts for current user
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+//	Schemes: https
+//
+//	Responses:
+//	  200: PostListResponse
+func (s *Post) List(w http.ResponseWriter, r *http.Request) {
+	userID := utils.GetUserIDFromContext(r.Context())
+
+	req := &dto.ListPostDTO{
+		Limit: utils.GetInt32FromQuery(r, "limit", 0),
+		Page:  utils.GetInt32FromQuery(r, "page", 0),
+		Query: r.URL.Query().Get("query"),
+	}
+
+	err := req.Validate()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	posts, err := s.service.List(req, userID)
+	if err != nil {
+		logger.Error.Println("Can't get list of posts:", err.Error())
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+	}
+
+	err = utils.ResponseWithMeta(w, posts, nil)
 	if err != nil {
 		logger.Error.Println(err.Error())
 	}
