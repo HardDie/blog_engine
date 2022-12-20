@@ -10,6 +10,7 @@ type IPost interface {
 	Feed(req *dto.FeedPostDTO) ([]*entity.Post, error)
 
 	Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
+	Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error)
 }
 
 type Post struct {
@@ -33,4 +34,7 @@ func (p *Post) Feed(req *dto.FeedPostDTO) ([]*entity.Post, error) {
 
 func (p *Post) Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error) {
 	return p.repository.Create(req, userID)
+}
+func (p *Post) Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
+	return p.repository.Edit(req, userID)
 }

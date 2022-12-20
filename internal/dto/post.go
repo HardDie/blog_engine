@@ -51,3 +51,28 @@ type ListPostFilter struct {
 	Query                string
 	DisplayOnlyPublished bool
 }
+
+type EditPostDTO struct {
+	ID          int32    `json:"-"`
+	Title       string   `json:"title"`
+	Short       string   `json:"short"`
+	Body        string   `json:"body"`
+	Tags        []string `json:"tags"`
+	IsPublished bool     `json:"isPublished"`
+}
+
+func (p *EditPostDTO) Validate() error {
+	if p == nil {
+		return nil
+	}
+	if p.Title == "" {
+		return fmt.Errorf("title can't be empty")
+	}
+	if p.Short == "" {
+		return fmt.Errorf("short can't be empty")
+	}
+	if p.Body == "" {
+		return fmt.Errorf("body can't be empty")
+	}
+	return nil
+}

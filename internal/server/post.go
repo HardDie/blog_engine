@@ -28,6 +28,7 @@ func (s *Post) RegisterPublicRouter(router *mux.Router) {
 func (s *Post) RegisterPrivateRouter(router *mux.Router, middleware ...mux.MiddlewareFunc) {
 	postRouter := router.PathPrefix("").Subrouter()
 	postRouter.HandleFunc("", s.Create).Methods(http.MethodPost)
+	postRouter.HandleFunc("/{id:[0-9]+}", s.Edit).Methods(http.MethodPut)
 	postRouter.Use(middleware...)
 }
 
@@ -141,6 +142,76 @@ func (s *Post) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	err = utils.Response(w, post)
+	if err != nil {
+		logger.Error.Println(err.Error())
+	}
+}
+
+// swagger:parameters PostEditRequest
+type PostEditRequest struct {
+	// In: path
+	ID int32 `json:"id"`
+	// In: body
+	Body struct {
+		dto.EditPostDTO
+	}
+}
+
+// swagger:response PostEditResponse
+type PostEditResponse struct {
+	// In: body
+	Body struct {
+		Data *entity.Post `json:"data"`
+	}
+}
+
+// swagger:route PUT /api/v1/posts/{id} Post PostEditRequest
+//
+// Edit post form
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+//	Schemes: https
+//
+//	Responses:
+//	  200: PostEditResponse
+func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
+	userID := utils.GetUserIDFromContext(r.Context())
+
+	req := &dto.EditPostDTO{}
+	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
+	if err != nil {
+		logger.Error.Printf(err.Error())
+		http.Error(w, "Can't parse request", http.StatusBadRequest)
+		return
+	}
+
+	err = req.Validate()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	req.ID, err = utils.GetInt32FromPath(r, "id")
+	if err != nil {
+		logger.Error.Printf(err.Error())
+		http.Error(w, "Bad id in path", http.StatusBadRequest)
+		return
+	}
+
+	post, err := s.service.Edit(req, userID)
+	if err != nil {
+		logger.Error.Println("Can't edit post:", err.Error())
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 	err = utils.Response(w, post)
 	if err != nil {
 		logger.Error.Println(err.Error())

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type Meta struct {
@@ -64,4 +66,19 @@ func GetInt32FromQuery(r *http.Request, key string, defaultValue int32) int32 {
 		return defaultValue
 	}
 	return int32(value)
+}
+func GetInt32FromPath(r *http.Request, key string) (int32, error) {
+	m := mux.Vars(r)
+	if m == nil {
+		return 0, fmt.Errorf("can't get map of variables from request")
+	}
+	val, ok := m[key]
+	if !ok {
+		return 0, fmt.Errorf("such key %s in path not exist", key)
+	}
+	res, err := strconv.ParseInt(val, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("bad int value in path: %w", err)
+	}
+	return int32(res), nil
 }

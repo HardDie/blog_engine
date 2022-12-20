@@ -14,6 +14,7 @@ import (
 type IPost interface {
 	List(filter *dto.ListPostFilter) ([]*entity.Post, error)
 	Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
+	Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error)
 }
 
 type Post struct {
@@ -82,6 +83,36 @@ func (r *Post) Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error
 	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 
 	err := row.Scan(&post.ID, &post.CreatedAt, &post.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return post, nil
+}
+func (r *Post) Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
+	post := &entity.Post{
+		ID:          req.ID,
+		UserID:      userID,
+		Title:       req.Title,
+		Short:       req.Short,
+		Body:        req.Body,
+		Tags:        strings.Join(req.Tags, ";"),
+		IsPublished: req.IsPublished,
+	}
+
+	q := gosql.NewUpdate().Table("posts")
+	q.Set().Append("title = ?", req.Title)
+	q.Set().Append("short = ?", req.Short)
+	q.Set().Append("body = ?", req.Body)
+	q.Set().Append("tags = ?", post.Tags)
+	q.Set().Append("is_published = ?", req.IsPublished)
+	q.Set().Append("updated_at = datetime('now')")
+	q.Where().AddExpression("id = ?", req.ID)
+	q.Where().AddExpression("deleted_at IS NULL")
+	q.Where().AddExpression("user_id = ?", userID)
+	q.Returning().Add("created_at", "updated_at")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+
+	err := row.Scan(&post.CreatedAt, &post.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
