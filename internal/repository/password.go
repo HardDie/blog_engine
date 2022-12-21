@@ -13,6 +13,7 @@ import (
 type IPassword interface {
 	Create(userID int32, passwordHash string) (*entity.Password, error)
 	GetByUserID(userID int32) (*entity.Password, error)
+	Update(id int32, passwordHash string) (*entity.Password, error)
 }
 
 type Password struct {
@@ -59,6 +60,26 @@ func (r *Password) GetByUserID(userID int32) (*entity.Password, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+		return nil, err
+	}
+	return password, nil
+}
+func (r *Password) Update(id int32, passwordHash string) (*entity.Password, error) {
+	password := &entity.Password{
+		ID:           id,
+		PasswordHash: passwordHash,
+	}
+
+	q := gosql.NewUpdate().Table("passwords")
+	q.Set().Append("password_hash = ?", passwordHash)
+	q.Set().Append("updated_at = datetime('now')")
+	q.Where().AddExpression("id = ?", id)
+	q.Where().AddExpression("deleted_at IS NULL")
+	q.Returning().Add("user_id", "created_at", "updated_at")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+
+	err := row.Scan(&password.UserID, &password.CreatedAt, &password.UpdatedAt)
+	if err != nil {
 		return nil, err
 	}
 	return password, nil

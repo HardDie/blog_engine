@@ -166,5 +166,5 @@ func (s *Auth) ValidateCookie(sessionToken string) (*entity.Session, error) {
 	return session, nil
 }
 func (s *Auth) GetUserInfo(userID int32) (*entity.User, error) {
-	return s.userRepository.GetByID(userID)
+	return s.userRepository.GetByID(userID, true)
 }

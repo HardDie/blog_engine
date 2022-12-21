@@ -79,6 +79,13 @@ func Get() (*Application, error) {
 	postServer.RegisterPublicRouter(postsRouter)
 	postServer.RegisterPrivateRouter(postsRouter, authMiddleware.RequestMiddleware)
 
+	userRouter := v1Router.PathPrefix("/user").Subrouter()
+	userServer := server.NewUser(
+		service.NewUser(userRepository, passwordRepository),
+	)
+	userServer.RegisterPublicRouter(userRouter)
+	userServer.RegisterPrivateRouter(userRouter, authMiddleware.RequestMiddleware)
+
 	return app, nil
 }
 

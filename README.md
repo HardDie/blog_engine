@@ -2,7 +2,7 @@
 
 #### Login/registration user
 | Endpoint | Method | Task | Body/Query | Authorization | Implemented |
-|--|--|--|--|--|--|
+|--|:--:|--|--|:--:|:--:|
 | /api/v1/auth/register | POST | Register user | username, password, invite | | [x] |
 | /api/v1/auth/login | POST | Login | username, password | | [x] |
 | /api/v1/auth/user | GET | Get information about current user | | + | [x] |
@@ -10,17 +10,24 @@
 
 ### Invites
 | Endpoint | Method | Task | Body/Query | Authorization | Implemented |
-|--|--|--|--|--|--|
+|--|:--:|--|--|:--:|:--:|
 | /api/v1/invites/generate | GET | Generate invite token | | + | [x] |
 | /api/v1/invites/revoke | DELETE | Revoke generated invite token | | + | [x] |
 
 ### Post
 | Endpoint | Method | Task | Body/Query | Authorization | Implemented |
-|--|--|--|--|--|--|
-| /api/v1/posts | POST | Create post | title, short, body, tags, is_publised | + | [x] |
+|--|:--:|--|--|:--:|:--:|
+| /api/v1/posts | POST | Create post | title, short, body, tags, isPublised | + | [x] |
 | /api/v1/posts | GET | Get list of posts for authorized user | limit, page, query | + | [x] |
-| /api/v1/posts/:id | PUT | Edit post | title, short, body, tags, is_published | + | [x] |
+| /api/v1/posts/:id | PUT | Edit post | title, short, body, tags, isPublished | + | [x] |
 | /api/v1/posts/feed | GET | Get list of all posts from all users (main page) | page, limit, query | | [x] |
+
+### User
+| Endpoint | Method | Task | Body/Query | Authorization | Implemented |
+|--|:--:|--|--|:--:|:--:|
+| /api/v1/user/password | PUT | Update password | oldPassword, newPassword | + | [x] |
+| /api/v1/user/profile | PUT | Update user info | displayedName, email | + | [x] |
+| /api/v1/user/:id | GET | Get information about user | | | [x] |
 
 #### Authorized user posts control (required cookie)
 | Endpoint | Method | Task | Body/Query | Implemented |
