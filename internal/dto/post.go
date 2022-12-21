@@ -1,49 +1,37 @@
 package dto
 
-import "fmt"
-
 type CreatePostDTO struct {
-	Title       string   `json:"title"`
-	Short       string   `json:"short"`
-	Body        string   `json:"body"`
+	Title       string   `json:"title" validate:"required"`
+	Short       string   `json:"short" validate:"required"`
+	Body        string   `json:"body" validate:"required"`
 	Tags        []string `json:"tags"`
 	IsPublished bool     `json:"isPublished"`
 }
 
-func (p *CreatePostDTO) Validate() error {
-	if p == nil {
-		return nil
-	}
-	if p.Title == "" {
-		return fmt.Errorf("title can't be empty")
-	}
-	if p.Short == "" {
-		return fmt.Errorf("short can't be empty")
-	}
-	if p.Body == "" {
-		return fmt.Errorf("body can't be empty")
-	}
-	return nil
-}
-
 type FeedPostDTO struct {
-	Limit int32  `json:"limit"`
-	Page  int32  `json:"page"`
+	Limit int32  `json:"limit" validate:"omitempty,gt=0"`
+	Page  int32  `json:"page" validate:"omitempty,gt=0"`
 	Query string `json:"query"`
 }
 
-func (d *FeedPostDTO) Validate() error {
-	if d == nil {
-		return nil
-	}
-	if d.Limit < 0 {
-		return fmt.Errorf("limit can't be less than 0")
-	}
-	if d.Page < 0 {
-		return fmt.Errorf("page can't be less than 0")
-	}
-	return nil
+type EditPostDTO struct {
+	ID          int32    `json:"-"`
+	Title       string   `json:"title" validate:"required"`
+	Short       string   `json:"short" validate:"required"`
+	Body        string   `json:"body" validate:"required"`
+	Tags        []string `json:"tags"`
+	IsPublished bool     `json:"isPublished"`
 }
+
+type ListPostDTO struct {
+	Limit int32  `json:"limit" validate:"omitempty,gt=0"`
+	Page  int32  `json:"page" validate:"omitempty,gt=0"`
+	Query string `json:"query"`
+}
+
+/*
+ * internal
+ */
 
 type ListPostFilter struct {
 	Limit                int32
@@ -51,48 +39,4 @@ type ListPostFilter struct {
 	Query                string
 	RelatedToUser        int32
 	DisplayOnlyPublished bool
-}
-
-type EditPostDTO struct {
-	ID          int32    `json:"-"`
-	Title       string   `json:"title"`
-	Short       string   `json:"short"`
-	Body        string   `json:"body"`
-	Tags        []string `json:"tags"`
-	IsPublished bool     `json:"isPublished"`
-}
-
-func (p *EditPostDTO) Validate() error {
-	if p == nil {
-		return nil
-	}
-	if p.Title == "" {
-		return fmt.Errorf("title can't be empty")
-	}
-	if p.Short == "" {
-		return fmt.Errorf("short can't be empty")
-	}
-	if p.Body == "" {
-		return fmt.Errorf("body can't be empty")
-	}
-	return nil
-}
-
-type ListPostDTO struct {
-	Limit int32  `json:"limit"`
-	Page  int32  `json:"page"`
-	Query string `json:"query"`
-}
-
-func (d *ListPostDTO) Validate() error {
-	if d == nil {
-		return nil
-	}
-	if d.Limit < 0 {
-		return fmt.Errorf("limit can't be less than 0")
-	}
-	if d.Page < 0 {
-		return fmt.Errorf("page can't be less than 0")
-	}
-	return nil
 }

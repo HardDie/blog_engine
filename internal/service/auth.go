@@ -52,7 +52,7 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 	}()
 
 	// Hashing invite
-	hashInvite := utils.HashSha256(*req.Invite)
+	hashInvite := utils.HashSha256(req.Invite)
 
 	// Check if invite exist
 	invite, err := s.inviteRepository.GetByInviteHash(hashInvite)
@@ -73,7 +73,7 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 	}
 
 	// Check if username is not busy
-	user, err := s.userRepository.GetByName(*req.Username)
+	user, err := s.userRepository.GetByName(req.Username)
 	if err != nil {
 		return nil, fmt.Errorf("error while trying get user: %w", err)
 	}
@@ -88,13 +88,13 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 	}
 
 	// Hashing password
-	hashPassword, err := utils.HashBcrypt(*req.Password)
+	hashPassword, err := utils.HashBcrypt(req.Password)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create a user
-	user, err = s.userRepository.Create(*req.Username, *req.DisplayedName, invite.UserID)
+	user, err = s.userRepository.Create(req.Username, req.DisplayedName, invite.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 }
 func (s *Auth) Login(req *dto.LoginDTO) (*entity.User, error) {
 	// Check if such user exist
-	user, err := s.userRepository.GetByName(*req.Username)
+	user, err := s.userRepository.GetByName(req.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (s *Auth) Login(req *dto.LoginDTO) (*entity.User, error) {
 	}
 
 	// Check if password is correct
-	if !utils.HashBcryptCompare(*req.Password, password.PasswordHash) {
+	if !utils.HashBcryptCompare(req.Password, password.PasswordHash) {
 		return nil, fmt.Errorf("invalid password")
 	}
 

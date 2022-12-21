@@ -72,7 +72,7 @@ func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 		Query: r.URL.Query().Get("query"),
 	}
 
-	err := req.Validate()
+	err := GetValidator().Struct(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -135,7 +135,7 @@ func (s *Post) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.Validate()
+	err = GetValidator().Struct(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -198,7 +198,7 @@ func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.Validate()
+	err = GetValidator().Struct(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -261,7 +261,7 @@ func (s *Post) List(w http.ResponseWriter, r *http.Request) {
 		Query: r.URL.Query().Get("query"),
 	}
 
-	err := req.Validate()
+	err := GetValidator().Struct(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

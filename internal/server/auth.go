@@ -72,7 +72,7 @@ func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.Validate()
+	err = GetValidator().Struct(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -130,7 +130,7 @@ func (s *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = req.Validate()
+	err = GetValidator().Struct(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
