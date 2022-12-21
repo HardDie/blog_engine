@@ -27,6 +27,10 @@ func (s *Invite) RegisterPrivateRouter(router *mux.Router, middleware ...mux.Mid
 	inviteRouter.Use(middleware...)
 }
 
+/*
+ * Private
+ */
+
 // swagger:parameters InviteGenerateRequest
 type InviteGenerateRequest struct {
 }

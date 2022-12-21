@@ -33,6 +33,10 @@ func (s *Post) RegisterPrivateRouter(router *mux.Router, middleware ...mux.Middl
 	postRouter.Use(middleware...)
 }
 
+/*
+ * Public
+ */
+
 // swagger:parameters PostFeedRequest
 type PostFeedRequest struct {
 	// In: query
@@ -85,6 +89,10 @@ func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 		logger.Error.Println(err.Error())
 	}
 }
+
+/*
+ * Private
+ */
 
 // swagger:parameters PostCreateRequest
 type PostCreateRequest struct {

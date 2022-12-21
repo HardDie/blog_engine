@@ -29,8 +29,13 @@ func (s *Auth) RegisterPublicRouter(router *mux.Router) {
 func (s *Auth) RegisterPrivateRouter(router *mux.Router, middleware ...mux.MiddlewareFunc) {
 	authRouter := router.PathPrefix("").Subrouter()
 	authRouter.HandleFunc("/user", s.User).Methods(http.MethodGet)
+	authRouter.HandleFunc("/logout", s.Logout).Methods(http.MethodPost)
 	authRouter.Use(middleware...)
 }
+
+/*
+ * Public
+ */
 
 // swagger:parameters AuthRegisterRequest
 type AuthRegisterRequest struct {
@@ -148,6 +153,10 @@ func (s *Auth) Login(w http.ResponseWriter, r *http.Request) {
 	utils.SetSessionCookie(session, w)
 }
 
+/*
+ * Private
+ */
+
 // swagger:parameters AuthUserRequest
 type AuthUserRequest struct {
 }
@@ -188,4 +197,38 @@ func (s *Auth) User(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error.Println(err.Error())
 	}
+}
+
+// swagger:parameters AuthLogoutRequest
+type AuthLogoutRequest struct {
+}
+
+// swagger:response AuthLogoutResponse
+type AuthLogoutResponse struct {
+}
+
+// swagger:route POST /api/v1/auth/logout Auth AuthLogoutRequest
+//
+// Close current session
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+//	Schemes: https
+//
+//	Responses:
+//	  200: AuthLogoutResponse
+func (s *Auth) Logout(w http.ResponseWriter, r *http.Request) {
+	session := utils.GetSessionFromContext(r.Context())
+
+	err := s.service.Logout(session.ID)
+	if err != nil {
+		logger.Error.Printf(err.Error())
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
+	utils.DeleteSessionCookie(w)
 }

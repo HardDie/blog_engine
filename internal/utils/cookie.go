@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/HardDie/blog_engine/internal/logger"
 )
@@ -14,6 +15,16 @@ func SetSessionCookie(session string, w http.ResponseWriter) {
 		Name:     "session",
 		Path:     "/",
 		Value:    session,
+		HttpOnly: true,
+	}
+	http.SetCookie(w, &cookie)
+}
+func DeleteSessionCookie(w http.ResponseWriter) {
+	cookie := http.Cookie{
+		Name:     "session",
+		Path:     "/",
+		Value:    "",
+		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)

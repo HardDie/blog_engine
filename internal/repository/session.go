@@ -10,6 +10,7 @@ import (
 type ISession interface {
 	CreateOrUpdate(userID int32, sessionHash string) (*entity.Session, error)
 	GetByUserID(sessionHash string) (*entity.Session, error)
+	DeleteByID(id int32) error
 }
 
 type Session struct {
@@ -32,7 +33,7 @@ func (r *Session) CreateOrUpdate(userID int32, sessionHash string) (*entity.Sess
 INSERT INTO sessions (user_id, session_hash)
 VALUES ($1, $2)
 ON CONFLICT (user_id) DO UPDATE
-SET session_hash = $2, updated_at = datetime('now')
+SET session_hash = $2, updated_at = datetime('now'), deleted_at = NULL
 RETURNING id, created_at, updated_at`, userID, sessionHash)
 
 	err := row.Scan(&session.ID, &session.CreatedAt, &session.UpdatedAt)
@@ -57,4 +58,18 @@ func (r *Session) GetByUserID(sessionHash string) (*entity.Session, error) {
 		return nil, err
 	}
 	return session, nil
+}
+func (r *Session) DeleteByID(id int32) error {
+	q := gosql.NewUpdate().Table("sessions")
+	q.Set().Add("deleted_at = datetime('now')")
+	q.Where().AddExpression("id = ?", id)
+	q.Where().AddExpression("deleted_at IS NULL")
+	q.Returning().Add("id")
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+
+	err := row.Scan(&id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

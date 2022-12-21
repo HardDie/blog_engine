@@ -20,8 +20,9 @@ var (
 type IAuth interface {
 	Register(req *dto.RegisterDTO) (*entity.User, error)
 	Login(req *dto.LoginDTO) (*entity.User, error)
+	Logout(sessionID int32) error
 	GenerateCookie(userID int32) (string, error)
-	ValidateCookie(session string) (*int32, error)
+	ValidateCookie(session string) (*entity.Session, error)
 	GetUserInfo(userID int32) (*entity.User, error)
 }
 
@@ -132,6 +133,9 @@ func (s *Auth) Login(req *dto.LoginDTO) (*entity.User, error) {
 
 	return user, nil
 }
+func (s *Auth) Logout(sessionID int32) error {
+	return s.sessionRepository.DeleteByID(sessionID)
+}
 func (s *Auth) GenerateCookie(userID int32) (string, error) {
 	// Generate session key
 	sessionKey, err := utils.GenerateSessionKey()
@@ -147,7 +151,7 @@ func (s *Auth) GenerateCookie(userID int32) (string, error) {
 
 	return sessionKey, nil
 }
-func (s *Auth) ValidateCookie(sessionToken string) (*int32, error) {
+func (s *Auth) ValidateCookie(sessionToken string) (*entity.Session, error) {
 	// Check if session exist
 	sessionHash := utils.HashSha256(sessionToken)
 	session, err := s.sessionRepository.GetByUserID(sessionHash)
@@ -159,7 +163,7 @@ func (s *Auth) ValidateCookie(sessionToken string) (*int32, error) {
 	if time.Now().Sub(session.UpdatedAt) > time.Hour*24 {
 		return nil, ErrorSessionHasExpired
 	}
-	return &session.UserID, nil
+	return session, nil
 }
 func (s *Auth) GetUserInfo(userID int32) (*entity.User, error) {
 	return s.userRepository.GetByID(userID)
