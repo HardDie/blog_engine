@@ -7,9 +7,10 @@ import (
 )
 
 type RegisterDTO struct {
-	Username *string `json:"username"`
-	Password *string `json:"password"`
-	Invite   *string `json:"invite"`
+	Username      *string `json:"username"`
+	Password      *string `json:"password"`
+	DisplayedName *string `json:"displayedName"`
+	Invite        *string `json:"invite"`
 }
 
 func (d *RegisterDTO) Validate() error {
@@ -21,6 +22,9 @@ func (d *RegisterDTO) Validate() error {
 	}
 	if d.Password == nil || *d.Password == "" {
 		return fmt.Errorf("password can't be empty")
+	}
+	if d.DisplayedName == nil || *d.DisplayedName == "" {
+		return fmt.Errorf("displayedName can't be empty")
 	}
 	if d.Invite == nil || *d.Invite == "" {
 		return fmt.Errorf("invite can't be empty")

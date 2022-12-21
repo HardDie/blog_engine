@@ -94,7 +94,7 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 	}
 
 	// Create a user
-	user, err = s.userRepository.Create(*req.Username, invite.UserID)
+	user, err = s.userRepository.Create(*req.Username, *req.DisplayedName, invite.UserID)
 	if err != nil {
 		return nil, err
 	}

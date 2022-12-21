@@ -14,7 +14,7 @@ import (
 type IUser interface {
 	GetByID(id int32, showPrivateInfo bool) (*entity.User, error)
 	GetByName(name string) (*entity.User, error)
-	Create(name string, invitedByUserID int32) (*entity.User, error)
+	Create(name, displayedName string, invitedByUserID int32) (*entity.User, error)
 	Update(req *dto.UpdateProfileDTO, id int32) (*entity.User, error)
 }
 
@@ -79,15 +79,16 @@ func (r *User) GetByName(name string) (*entity.User, error) {
 	}
 	return user, nil
 }
-func (r *User) Create(name string, invitedByUserID int32) (*entity.User, error) {
+func (r *User) Create(name, displayedName string, invitedByUserID int32) (*entity.User, error) {
 	user := &entity.User{
 		Username:        &name,
+		DisplayedName:   &displayedName,
 		InvitedByUserID: &invitedByUserID,
 	}
 
 	q := gosql.NewInsert().Into("users")
 	q.Columns().Add("username", "displayed_name", "invited_by_user")
-	q.Columns().Arg(name, name, invitedByUserID)
+	q.Columns().Arg(name, displayedName, invitedByUserID)
 	q.Returning().Add("id", "created_at", "updated_at")
 	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 

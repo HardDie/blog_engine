@@ -3,7 +3,7 @@
 #### Login/registration user
 | Endpoint | Method | Task | Body/Query | Authorization | Implemented |
 |--|:--:|--|--|:--:|:--:|
-| /api/v1/auth/register | POST | Register user | username, password, invite | | [x] |
+| /api/v1/auth/register | POST | Register user | username, displayedName, password, invite | | [x] |
 | /api/v1/auth/login | POST | Login | username, password | | [x] |
 | /api/v1/auth/user | GET | Get information about current user | | + | [x] |
 | /api/v1/auth/logout | POST | Logout active session | | + | [x] |
