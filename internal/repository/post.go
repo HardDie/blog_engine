@@ -37,9 +37,9 @@ func (r *Post) List(filter *dto.ListPostFilter) ([]*entity.Post, int32, error) {
 	if filter.DisplayOnlyPublished {
 		q.Where().AddExpression("is_published IS true")
 	}
-	//if filter.Query != "" {
-	//	q.Where().AddExpression("lower(title) LIKE %?%", strings.ToLower(filter.Query))
-	//}
+	if filter.Query != "" {
+		q.Where().AddExpression("lower(title) LIKE ?", utils.PrepareStringToLike(filter.Query))
+	}
 	if filter.RelatedToUser > 0 {
 		q.Where().AddExpression("user_id = ?", filter.RelatedToUser)
 	}
