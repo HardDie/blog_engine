@@ -51,7 +51,7 @@ type AuthRegisterResponse struct {
 
 // swagger:route POST /api/v1/auth/register Auth AuthRegisterRequest
 //
-// Registration form
+// # Registration form
 //
 //	Consumes:
 //	- application/json
@@ -109,7 +109,7 @@ type AuthLoginResponse struct {
 
 // swagger:route POST /api/v1/auth/login Auth AuthLoginRequest
 //
-// Login form
+// # Login form
 //
 //	Consumes:
 //	- application/json
@@ -171,7 +171,7 @@ type AuthUserResponse struct {
 
 // swagger:route GET /api/v1/auth/user Auth AuthUserRequest
 //
-// Getting information about the current user
+// # Getting information about the current user
 //
 //	Consumes:
 //	- application/json
@@ -209,7 +209,7 @@ type AuthLogoutResponse struct {
 
 // swagger:route POST /api/v1/auth/logout Auth AuthLogoutRequest
 //
-// Close current session
+// # Close the current session
 //
 //	Consumes:
 //	- application/json

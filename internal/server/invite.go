@@ -41,7 +41,7 @@ type InviteGenerateResponse struct {
 
 // swagger:route GET /api/v1/invites/generate Invite InviteGenerateRequest
 //
-// Generate new invite code
+// # Generate a new invitation code
 //
 //	Consumes:
 //	- application/json
@@ -78,7 +78,7 @@ type InviteRevokeResponse struct {
 
 // swagger:route DELETE /api/v1/invites/revoke Invite InviteRevokeRequest
 //
-// Revoke generated invite code
+// # Revoke the generated invitation code
 //
 //	Consumes:
 //	- application/json

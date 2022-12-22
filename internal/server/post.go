@@ -53,7 +53,7 @@ type PostFeedResponse struct {
 
 // swagger:route GET /api/v1/posts/feed Post PostFeedRequest
 //
-// Get feed
+// # Get feed
 //
 //	Consumes:
 //	- application/json
@@ -117,7 +117,7 @@ type PostCreateResponse struct {
 
 // swagger:route POST /api/v1/posts Post PostCreateRequest
 //
-// Create post form
+// # Post creation form
 //
 //	Consumes:
 //	- application/json
@@ -180,7 +180,7 @@ type PostEditResponse struct {
 
 // swagger:route PUT /api/v1/posts/{id} Post PostEditRequest
 //
-// Edit post form
+// # Edit post form
 //
 //	Consumes:
 //	- application/json
@@ -245,7 +245,7 @@ type PostListResponse struct {
 
 // swagger:route GET /api/v1/posts Post PostListRequest
 //
-// Get list of posts for current user
+// # Get a list of posts for the current user
 //
 //	Consumes:
 //	- application/json

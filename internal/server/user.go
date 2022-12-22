@@ -52,7 +52,7 @@ type UserGetResponse struct {
 
 // swagger:route GET /api/v1/user/{id} User UserGetRequest
 //
-// Get user info by id
+// # Getting information about a user by ID
 //
 //	Consumes:
 //	- application/json
@@ -103,7 +103,7 @@ type UserPasswordResponse struct {
 
 // swagger:route PUT /api/v1/user/password User UserPasswordRequest
 //
-// Update password for user
+// # Updating the password for a user
 //
 //	Consumes:
 //	- application/json
@@ -154,7 +154,7 @@ type UserProfileResponse struct {
 
 // swagger:route PUT /api/v1/user/profile User UserProfileRequest
 //
-// Update user info
+// # Updating user information
 //
 //	Consumes:
 //	- application/json
