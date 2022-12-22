@@ -12,7 +12,7 @@ import (
 )
 
 type IPost interface {
-	List(filter *dto.ListPostFilter) ([]*entity.Post, error)
+	List(filter *dto.ListPostFilter) ([]*entity.Post, int32, error)
 	Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
 	Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error)
 }
@@ -27,11 +27,12 @@ func NewPost(db *db.DB) *Post {
 	}
 }
 
-func (r *Post) List(filter *dto.ListPostFilter) ([]*entity.Post, error) {
+func (r *Post) List(filter *dto.ListPostFilter) ([]*entity.Post, int32, error) {
 	var res []*entity.Post
+	var total int32
 
 	q := gosql.NewSelect().From("posts")
-	q.Columns().Add("id", "user_id", "title", "short", "tags", "created_at", "updated_at")
+	q.Columns().Add("id", "user_id", "title", "short", "tags", "created_at", "updated_at", "count(*) over()")
 	q.Where().AddExpression("deleted_at IS NULL")
 	if filter.DisplayOnlyPublished {
 		q.Where().AddExpression("is_published IS true")
@@ -48,26 +49,26 @@ func (r *Post) List(filter *dto.ListPostFilter) ([]*entity.Post, error) {
 	q.AddOrder("id DESC")
 	rows, err := r.db.DB.Query(q.String(), q.GetArguments()...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		post := &entity.Post{}
 
-		err = rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Short, &post.Tags, &post.CreatedAt, &post.UpdatedAt)
+		err = rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Short, &post.Tags, &post.CreatedAt, &post.UpdatedAt, &total)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		res = append(res, post)
 	}
 
 	err = rows.Err()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return res, nil
+	return res, total, nil
 }
 func (r *Post) Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error) {
 	post := &entity.Post{

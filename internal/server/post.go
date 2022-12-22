@@ -78,13 +78,18 @@ func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := s.service.Feed(req)
+	posts, total, err := s.service.Feed(req)
 	if err != nil {
 		logger.Error.Println("Can't get feed:", err.Error())
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
 	}
 
-	err = utils.ResponseWithMeta(w, posts, nil)
+	meta := &utils.Meta{
+		Total: total,
+		Limit: req.Limit,
+		Page:  req.Page,
+	}
+	err = utils.ResponseWithMeta(w, posts, meta)
 	if err != nil {
 		logger.Error.Println(err.Error())
 	}
@@ -267,13 +272,18 @@ func (s *Post) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := s.service.List(req, userID)
+	posts, total, err := s.service.List(req, userID)
 	if err != nil {
 		logger.Error.Println("Can't get list of posts:", err.Error())
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
 	}
 
-	err = utils.ResponseWithMeta(w, posts, nil)
+	meta := &utils.Meta{
+		Total: total,
+		Limit: req.Limit,
+		Page:  req.Page,
+	}
+	err = utils.ResponseWithMeta(w, posts, meta)
 	if err != nil {
 		logger.Error.Println(err.Error())
 	}

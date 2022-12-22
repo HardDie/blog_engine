@@ -85,7 +85,7 @@ func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := s.service.GenerateCookie(*user.ID)
+	session, err := s.service.GenerateCookie(user.ID)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -143,7 +143,7 @@ func (s *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := s.service.GenerateCookie(*user.ID)
+	session, err := s.service.GenerateCookie(user.ID)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)

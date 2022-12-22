@@ -30,7 +30,7 @@ func NewUser(db *db.DB) *User {
 
 func (r *User) GetByID(id int32, showPrivateInfo bool) (*entity.User, error) {
 	user := &entity.User{
-		ID: &id,
+		ID: id,
 	}
 
 	q := gosql.NewSelect().From("users")
@@ -60,7 +60,7 @@ func (r *User) GetByID(id int32, showPrivateInfo bool) (*entity.User, error) {
 }
 func (r *User) GetByName(name string) (*entity.User, error) {
 	user := &entity.User{
-		Username: &name,
+		Username: name,
 	}
 
 	q := gosql.NewSelect().From("users")
@@ -81,9 +81,9 @@ func (r *User) GetByName(name string) (*entity.User, error) {
 }
 func (r *User) Create(name, displayedName string, invitedByUserID int32) (*entity.User, error) {
 	user := &entity.User{
-		Username:        &name,
-		DisplayedName:   &displayedName,
-		InvitedByUserID: &invitedByUserID,
+		Username:        name,
+		DisplayedName:   displayedName,
+		InvitedByUserID: invitedByUserID,
 	}
 
 	q := gosql.NewInsert().Into("users")
@@ -100,9 +100,9 @@ func (r *User) Create(name, displayedName string, invitedByUserID int32) (*entit
 }
 func (r *User) Update(req *dto.UpdateProfileDTO, id int32) (*entity.User, error) {
 	user := &entity.User{
-		ID:            &id,
-		DisplayedName: &req.DisplayedName,
-		Email:         &req.Email,
+		ID:            id,
+		DisplayedName: req.DisplayedName,
+		Email:         req.Email,
 	}
 
 	q := gosql.NewUpdate().Table("users")

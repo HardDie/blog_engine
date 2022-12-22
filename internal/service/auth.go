@@ -100,7 +100,7 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 	}
 
 	// Create a password
-	_, err = s.passwordRepository.Create(*user.ID, hashPassword)
+	_, err = s.passwordRepository.Create(user.ID, hashPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (s *Auth) Login(req *dto.LoginDTO) (*entity.User, error) {
 	}
 
 	// Get password from DB
-	password, err := s.passwordRepository.GetByUserID(*user.ID)
+	password, err := s.passwordRepository.GetByUserID(user.ID)
 	if err != nil {
 		return nil, err
 	}

@@ -7,11 +7,11 @@ import (
 )
 
 type IPost interface {
-	Feed(req *dto.FeedPostDTO) ([]*entity.Post, error)
+	Feed(req *dto.FeedPostDTO) ([]*entity.Post, int32, error)
 
 	Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
 	Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error)
-	List(req *dto.ListPostDTO, userID int32) ([]*entity.Post, error)
+	List(req *dto.ListPostDTO, userID int32) ([]*entity.Post, int32, error)
 }
 
 type Post struct {
@@ -24,7 +24,7 @@ func NewPost(repository repository.IPost) *Post {
 	}
 }
 
-func (p *Post) Feed(req *dto.FeedPostDTO) ([]*entity.Post, error) {
+func (p *Post) Feed(req *dto.FeedPostDTO) ([]*entity.Post, int32, error) {
 	return p.repository.List(&dto.ListPostFilter{
 		Limit:                req.Limit,
 		Page:                 req.Page,
@@ -39,7 +39,7 @@ func (p *Post) Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error
 func (p *Post) Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
 	return p.repository.Edit(req, userID)
 }
-func (p *Post) List(req *dto.ListPostDTO, userID int32) ([]*entity.Post, error) {
+func (p *Post) List(req *dto.ListPostDTO, userID int32) ([]*entity.Post, int32, error) {
 	return p.repository.List(&dto.ListPostFilter{
 		Limit:                req.Limit,
 		Page:                 req.Page,
