@@ -4,7 +4,7 @@ type CreatePostDTO struct {
 	Title       string   `json:"title" validate:"required"`
 	Short       string   `json:"short" validate:"required"`
 	Body        string   `json:"body" validate:"required"`
-	Tags        []string `json:"tags"`
+	Tags        []string `json:"tags" validate:"omitempty,dive,alphanum"`
 	IsPublished bool     `json:"isPublished"`
 }
 

@@ -55,11 +55,13 @@ func (r *Post) List(filter *dto.ListPostFilter) ([]*entity.Post, int32, error) {
 
 	for rows.Next() {
 		post := &entity.Post{}
+		var tags string
 
-		err = rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Short, &post.Tags, &post.CreatedAt, &post.UpdatedAt, &total)
+		err = rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Short, &tags, &post.CreatedAt, &post.UpdatedAt, &total)
 		if err != nil {
 			return nil, 0, err
 		}
+		post.Tags = strings.Split(tags, ";")
 		res = append(res, post)
 	}
 
@@ -76,13 +78,14 @@ func (r *Post) Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error
 		Title:       req.Title,
 		Short:       req.Short,
 		Body:        req.Body,
-		Tags:        strings.Join(req.Tags, ";"),
+		Tags:        req.Tags,
 		IsPublished: req.IsPublished,
 	}
+	tags := strings.Join(req.Tags, ";")
 
 	q := gosql.NewInsert().Into("posts")
 	q.Columns().Add("user_id", "title", "short", "body", "tags", "is_published")
-	q.Columns().Arg(userID, req.Title, req.Short, req.Body, post.Tags, req.IsPublished)
+	q.Columns().Arg(userID, req.Title, req.Short, req.Body, tags, req.IsPublished)
 	q.Returning().Add("id", "created_at", "updated_at")
 	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
 
@@ -99,15 +102,16 @@ func (r *Post) Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
 		Title:       req.Title,
 		Short:       req.Short,
 		Body:        req.Body,
-		Tags:        strings.Join(req.Tags, ";"),
+		Tags:        req.Tags,
 		IsPublished: req.IsPublished,
 	}
+	tags := strings.Join(req.Tags, ";")
 
 	q := gosql.NewUpdate().Table("posts")
 	q.Set().Append("title = ?", req.Title)
 	q.Set().Append("short = ?", req.Short)
 	q.Set().Append("body = ?", req.Body)
-	q.Set().Append("tags = ?", post.Tags)
+	q.Set().Append("tags = ?", tags)
 	q.Set().Append("is_published = ?", req.IsPublished)
 	q.Set().Append("updated_at = datetime('now')")
 	q.Where().AddExpression("id = ?", req.ID)

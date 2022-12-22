@@ -8,7 +8,7 @@ type Post struct {
 	Title       string     `json:"title"`
 	Short       string     `json:"short"`
 	Body        string     `json:"body"`
-	Tags        string     `json:"tags"`
+	Tags        []string   `json:"tags"`
 	IsPublished bool       `json:"isPublished"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`
