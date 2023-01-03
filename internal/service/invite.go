@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/HardDie/blog_engine/internal/repository"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
@@ -41,6 +43,9 @@ func (s *Invite) Revoke(userID int32) error {
 	invite, err := s.inviteRepository.GetActiveByUserID(userID)
 	if err != nil {
 		return err
+	}
+	if invite == nil {
+		return fmt.Errorf("no active invites")
 	}
 	err = s.inviteRepository.Delete(invite.ID)
 	if err != nil {

@@ -6,6 +6,6 @@ type UpdatePasswordDTO struct {
 }
 
 type UpdateProfileDTO struct {
-	DisplayedName string `json:"displayedName" validate:"required"`
-	Email         string `json:"email" validate:"omitempty,email"`
+	DisplayedName string  `json:"displayedName" validate:"required"`
+	Email         *string `json:"email" validate:"omitempty,email"`
 }
