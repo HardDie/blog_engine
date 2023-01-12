@@ -8,6 +8,7 @@ import (
 
 type IPost interface {
 	Feed(req *dto.FeedPostDTO) ([]*entity.Post, int32, error)
+	PublicGet(id int32) (*entity.Post, error)
 
 	Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
 	Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error)
@@ -31,6 +32,9 @@ func (p *Post) Feed(req *dto.FeedPostDTO) ([]*entity.Post, int32, error) {
 		Query:                req.Query,
 		DisplayOnlyPublished: true,
 	})
+}
+func (p *Post) PublicGet(id int32) (*entity.Post, error) {
+	return p.repository.GetByID(id, nil)
 }
 
 func (p *Post) Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error) {

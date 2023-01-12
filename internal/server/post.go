@@ -24,6 +24,7 @@ func NewPost(service service.IPost) *Post {
 func (s *Post) RegisterPublicRouter(router *mux.Router) {
 	postRouter := router.PathPrefix("").Subrouter()
 	postRouter.HandleFunc("/feed", s.Feed).Methods(http.MethodGet)
+	postRouter.HandleFunc("/{id:[0-9]+}", s.PublicGet).Methods(http.MethodGet)
 }
 func (s *Post) RegisterPrivateRouter(router *mux.Router, middleware ...mux.MiddlewareFunc) {
 	postRouter := router.PathPrefix("").Subrouter()
@@ -82,6 +83,47 @@ func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 		Page:  req.Page,
 	}
 	err = utils.ResponseWithMeta(w, posts, meta)
+	if err != nil {
+		logger.Error.Println(err.Error())
+	}
+}
+
+// swagger:parameters PostPublicGetRequest
+type PostPublicGetRequest struct {
+	// In: path
+	ID int32 `json:"id"`
+}
+
+// swagger:response PostPublicGetResponse
+type PostPublicGetResponse struct {
+	// In: body
+	Body struct {
+		Data *entity.Post `json:"data"`
+	}
+}
+
+// swagger:route GET /api/v1/posts/{id} Post PostPublicGetRequest
+//
+// # Get public post
+//
+//	Responses:
+//	  200: PostPublicGetResponse
+func (s *Post) PublicGet(w http.ResponseWriter, r *http.Request) {
+	id, err := utils.GetInt32FromPath(r, "id")
+	if err != nil {
+		logger.Error.Printf(err.Error())
+		http.Error(w, "Bad id in path", http.StatusBadRequest)
+		return
+	}
+
+	post, err := s.service.PublicGet(id)
+	if err != nil {
+		logger.Error.Println("Can't get post:", err.Error())
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	err = utils.Response(w, post)
 	if err != nil {
 		logger.Error.Println(err.Error())
 	}

@@ -15,6 +15,7 @@ type IPost interface {
 	List(filter *dto.ListPostFilter) ([]*entity.Post, int32, error)
 	Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
 	Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error)
+	GetByID(id int32, userID *int32) (*entity.Post, error)
 }
 
 type Post struct {
@@ -124,5 +125,32 @@ func (r *Post) Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
 	if err != nil {
 		return nil, err
 	}
+	return post, nil
+}
+func (r *Post) GetByID(id int32, userID *int32) (*entity.Post, error) {
+	post := &entity.Post{
+		ID: id,
+	}
+
+	q := gosql.NewSelect().From("posts")
+	q.Columns().Add("user_id", "title", "short", "body", "tags", "is_published", "created_at", "updated_at")
+	q.Where().AddExpression("deleted_at IS NULL")
+	q.Where().AddExpression("id = ?", id)
+	if userID == nil {
+		// Display only published post
+		q.Where().AddExpression("is_published IS TRUE")
+	} else {
+		// Display any post of current user
+		q.Where().AddExpression("user_id = ?", userID)
+	}
+	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+
+	var tags string
+	err := row.Scan(&post.UserID, &post.Title, &post.Short, &post.Body, &tags, &post.IsPublished, &post.CreatedAt,
+		&post.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	post.Tags = strings.Split(tags, ";")
 	return post, nil
 }
