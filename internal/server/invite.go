@@ -43,14 +43,6 @@ type InviteGenerateResponse struct {
 //
 // # Generate a new invitation code
 //
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
-//
 //	Responses:
 //	  200: InviteGenerateResponse
 func (s *Invite) Generate(w http.ResponseWriter, r *http.Request) {
@@ -79,14 +71,6 @@ type InviteRevokeResponse struct {
 // swagger:route DELETE /api/v1/invites/revoke Invite InviteRevokeRequest
 //
 // # Revoke the generated invitation code
-//
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
 //
 //	Responses:
 //	  200: InviteRevokeResponse

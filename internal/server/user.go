@@ -54,14 +54,6 @@ type UserGetResponse struct {
 //
 // # Getting information about a user by ID
 //
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
-//
 //	Responses:
 //	  200: UserGetResponse
 func (s *User) Get(w http.ResponseWriter, r *http.Request) {
@@ -105,14 +97,6 @@ type UserPasswordResponse struct {
 //
 // # Updating the password for a user
 //
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
-//
 //	Responses:
 //	  200: UserPasswordResponse
 func (s *User) Password(w http.ResponseWriter, r *http.Request) {
@@ -155,14 +139,6 @@ type UserProfileResponse struct {
 // swagger:route PUT /api/v1/user/profile User UserProfileRequest
 //
 // # Updating user information
-//
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
 //
 //	Responses:
 //	  200: UserProfileResponse

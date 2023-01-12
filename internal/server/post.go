@@ -55,14 +55,6 @@ type PostFeedResponse struct {
 //
 // # Get feed
 //
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
-//
 //	Responses:
 //	  200: PostFeedResponse
 func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
@@ -119,14 +111,6 @@ type PostCreateResponse struct {
 //
 // # Post creation form
 //
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
-//
 //	Responses:
 //	  200: PostCreateResponse
 func (s *Post) Create(w http.ResponseWriter, r *http.Request) {
@@ -181,14 +165,6 @@ type PostEditResponse struct {
 // swagger:route PUT /api/v1/posts/{id} Post PostEditRequest
 //
 // # Edit post form
-//
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
 //
 //	Responses:
 //	  200: PostEditResponse
@@ -246,14 +222,6 @@ type PostListResponse struct {
 // swagger:route GET /api/v1/posts Post PostListRequest
 //
 // # Get a list of posts for the current user
-//
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
 //
 //	Responses:
 //	  200: PostListResponse

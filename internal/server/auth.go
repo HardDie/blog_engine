@@ -53,14 +53,6 @@ type AuthRegisterResponse struct {
 //
 // # Registration form
 //
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
-//
 //	Responses:
 //	  200: AuthRegisterResponse
 func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
@@ -110,14 +102,6 @@ type AuthLoginResponse struct {
 // swagger:route POST /api/v1/auth/login Auth AuthLoginRequest
 //
 // # Login form
-//
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
 //
 //	Responses:
 //	  200: AuthLoginResponse
@@ -173,14 +157,6 @@ type AuthUserResponse struct {
 //
 // # Getting information about the current user
 //
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
-//
 //	Responses:
 //	  200: AuthUserResponse
 func (s *Auth) User(w http.ResponseWriter, r *http.Request) {
@@ -210,14 +186,6 @@ type AuthLogoutResponse struct {
 // swagger:route POST /api/v1/auth/logout Auth AuthLogoutRequest
 //
 // # Close the current session
-//
-//	Consumes:
-//	- application/json
-//
-//	Produces:
-//	- application/json
-//
-//	Schemes: https
 //
 //	Responses:
 //	  200: AuthLogoutResponse
