@@ -20,6 +20,7 @@
 | /api/v1/posts | POST | Create post | title, short, body, tags, isPublised | + | [x] |
 | /api/v1/posts | GET | Get list of posts for authorized user | limit, page, query | + | [x] |
 | /api/v1/posts/:id | PUT | Edit post | title, short, body, tags, isPublished | + | [x] |
+| /api/v1/posts/:id | GET | Get publised post by id | | | [x] |
 | /api/v1/posts/feed | GET | Get list of all posts from all users (main page) | page, limit, query | | [x] |
 
 ### User
