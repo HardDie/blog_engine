@@ -59,6 +59,8 @@ type PostFeedResponse struct {
 //	Responses:
 //	  200: PostFeedResponse
 func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	req := &dto.FeedPostDTO{
 		Limit: utils.GetInt32FromQuery(r, "limit", 0),
 		Page:  utils.GetInt32FromQuery(r, "page", 0),
@@ -71,7 +73,7 @@ func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, total, err := s.service.Feed(req)
+	posts, total, err := s.service.Feed(ctx, req)
 	if err != nil {
 		logger.Error.Println("Can't get feed:", err.Error())
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
@@ -109,6 +111,7 @@ type PostPublicGetResponse struct {
 //	Responses:
 //	  200: PostPublicGetResponse
 func (s *Post) PublicGet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	id, err := utils.GetInt32FromPath(r, "id")
 	if err != nil {
 		logger.Error.Printf(err.Error())
@@ -116,7 +119,7 @@ func (s *Post) PublicGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := s.service.PublicGet(id)
+	post, err := s.service.PublicGet(ctx, id)
 	if err != nil {
 		logger.Error.Println("Can't get post:", err.Error())
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
@@ -156,7 +159,8 @@ type PostCreateResponse struct {
 //	Responses:
 //	  200: PostCreateResponse
 func (s *Post) Create(w http.ResponseWriter, r *http.Request) {
-	userID := utils.GetUserIDFromContext(r.Context())
+	ctx := r.Context()
+	userID := utils.GetUserIDFromContext(ctx)
 
 	req := &dto.CreatePostDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
@@ -172,7 +176,7 @@ func (s *Post) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := s.service.Create(req, userID)
+	post, err := s.service.Create(ctx, req, userID)
 	if err != nil {
 		logger.Error.Println("Can't create post:", err.Error())
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
@@ -211,7 +215,8 @@ type PostEditResponse struct {
 //	Responses:
 //	  200: PostEditResponse
 func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
-	userID := utils.GetUserIDFromContext(r.Context())
+	ctx := r.Context()
+	userID := utils.GetUserIDFromContext(ctx)
 
 	req := &dto.EditPostDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
@@ -234,7 +239,7 @@ func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := s.service.Edit(req, userID)
+	post, err := s.service.Edit(ctx, req, userID)
 	if err != nil {
 		logger.Error.Println("Can't edit post:", err.Error())
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
@@ -268,7 +273,8 @@ type PostListResponse struct {
 //	Responses:
 //	  200: PostListResponse
 func (s *Post) List(w http.ResponseWriter, r *http.Request) {
-	userID := utils.GetUserIDFromContext(r.Context())
+	ctx := r.Context()
+	userID := utils.GetUserIDFromContext(ctx)
 
 	req := &dto.ListPostDTO{
 		Limit: utils.GetInt32FromQuery(r, "limit", 0),
@@ -282,7 +288,7 @@ func (s *Post) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, total, err := s.service.List(req, userID)
+	posts, total, err := s.service.List(ctx, req, userID)
 	if err != nil {
 		logger.Error.Println("Can't get list of posts:", err.Error())
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)

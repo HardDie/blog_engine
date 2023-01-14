@@ -46,9 +46,10 @@ type InviteGenerateResponse struct {
 //	Responses:
 //	  200: InviteGenerateResponse
 func (s *Invite) Generate(w http.ResponseWriter, r *http.Request) {
-	userID := utils.GetUserIDFromContext(r.Context())
+	ctx := r.Context()
+	userID := utils.GetUserIDFromContext(ctx)
 
-	inviteCode, err := s.service.Generate(userID)
+	inviteCode, err := s.service.Generate(ctx, userID)
 	if err != nil {
 		logger.Error.Println("Error generating invite code:", err.Error())
 		http.Error(w, "Can't generate invite code", http.StatusInternalServerError)
@@ -75,9 +76,10 @@ type InviteRevokeResponse struct {
 //	Responses:
 //	  200: InviteRevokeResponse
 func (s *Invite) Revoke(w http.ResponseWriter, r *http.Request) {
-	userID := utils.GetUserIDFromContext(r.Context())
+	ctx := r.Context()
+	userID := utils.GetUserIDFromContext(ctx)
 
-	err := s.service.Revoke(userID)
+	err := s.service.Revoke(ctx, userID)
 	if err != nil {
 		logger.Error.Println("Error revoking invite code:", err.Error())
 		http.Error(w, "Can't revoke invite code", http.StatusInternalServerError)

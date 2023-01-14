@@ -1,18 +1,20 @@
 package service
 
 import (
+	"context"
+
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/repository"
 )
 
 type IPost interface {
-	Feed(req *dto.FeedPostDTO) ([]*entity.Post, int32, error)
-	PublicGet(id int32) (*entity.Post, error)
+	Feed(ctx context.Context, req *dto.FeedPostDTO) ([]*entity.Post, int32, error)
+	PublicGet(ctx context.Context, id int32) (*entity.Post, error)
 
-	Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
-	Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error)
-	List(req *dto.ListPostDTO, userID int32) ([]*entity.Post, int32, error)
+	Create(ctx context.Context, req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
+	Edit(ctx context.Context, req *dto.EditPostDTO, userID int32) (*entity.Post, error)
+	List(ctx context.Context, req *dto.ListPostDTO, userID int32) ([]*entity.Post, int32, error)
 }
 
 type Post struct {
@@ -25,26 +27,26 @@ func NewPost(repository repository.IPost) *Post {
 	}
 }
 
-func (p *Post) Feed(req *dto.FeedPostDTO) ([]*entity.Post, int32, error) {
-	return p.repository.List(&dto.ListPostFilter{
+func (p *Post) Feed(ctx context.Context, req *dto.FeedPostDTO) ([]*entity.Post, int32, error) {
+	return p.repository.List(ctx, &dto.ListPostFilter{
 		Limit:                req.Limit,
 		Page:                 req.Page,
 		Query:                req.Query,
 		DisplayOnlyPublished: true,
 	})
 }
-func (p *Post) PublicGet(id int32) (*entity.Post, error) {
-	return p.repository.GetByID(id, nil)
+func (p *Post) PublicGet(ctx context.Context, id int32) (*entity.Post, error) {
+	return p.repository.GetByID(ctx, id, nil)
 }
 
-func (p *Post) Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error) {
-	return p.repository.Create(req, userID)
+func (p *Post) Create(ctx context.Context, req *dto.CreatePostDTO, userID int32) (*entity.Post, error) {
+	return p.repository.Create(ctx, req, userID)
 }
-func (p *Post) Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
-	return p.repository.Edit(req, userID)
+func (p *Post) Edit(ctx context.Context, req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
+	return p.repository.Edit(ctx, req, userID)
 }
-func (p *Post) List(req *dto.ListPostDTO, userID int32) ([]*entity.Post, int32, error) {
-	return p.repository.List(&dto.ListPostFilter{
+func (p *Post) List(ctx context.Context, req *dto.ListPostDTO, userID int32) ([]*entity.Post, int32, error) {
+	return p.repository.List(ctx, &dto.ListPostFilter{
 		Limit:                req.Limit,
 		Page:                 req.Page,
 		Query:                req.Query,

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/HardDie/blog_engine/internal/dto"
@@ -10,10 +11,10 @@ import (
 )
 
 type IUser interface {
-	Get(id int32) (*entity.User, error)
+	Get(ctx context.Context, id int32) (*entity.User, error)
 
-	Password(req *dto.UpdatePasswordDTO, userID int32) error
-	Profile(req *dto.UpdateProfileDTO, userID int32) (*entity.User, error)
+	Password(ctx context.Context, req *dto.UpdatePasswordDTO, userID int32) error
+	Profile(ctx context.Context, req *dto.UpdateProfileDTO, userID int32) (*entity.User, error)
 }
 
 type User struct {
@@ -28,13 +29,13 @@ func NewUser(repository repository.IUser, password repository.IPassword) *User {
 	}
 }
 
-func (s *User) Get(id int32) (*entity.User, error) {
-	return s.userRepository.GetByID(id, false)
+func (s *User) Get(ctx context.Context, id int32) (*entity.User, error) {
+	return s.userRepository.GetByID(ctx, id, false)
 }
 
-func (s *User) Password(req *dto.UpdatePasswordDTO, userID int32) error {
+func (s *User) Password(ctx context.Context, req *dto.UpdatePasswordDTO, userID int32) error {
 	// Get password from DB
-	password, err := s.passwordRepository.GetByUserID(userID)
+	password, err := s.passwordRepository.GetByUserID(ctx, userID)
 	if err != nil {
 		return err
 	}
@@ -54,12 +55,12 @@ func (s *User) Password(req *dto.UpdatePasswordDTO, userID int32) error {
 	}
 
 	// Update password
-	password, err = s.passwordRepository.Update(userID, hashPassword)
+	password, err = s.passwordRepository.Update(ctx, userID, hashPassword)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (s *User) Profile(req *dto.UpdateProfileDTO, userID int32) (*entity.User, error) {
-	return s.userRepository.Update(req, userID)
+func (s *User) Profile(ctx context.Context, req *dto.UpdateProfileDTO, userID int32) (*entity.User, error) {
+	return s.userRepository.Update(ctx, req, userID)
 }

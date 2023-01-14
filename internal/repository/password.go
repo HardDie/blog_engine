@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -11,9 +12,9 @@ import (
 )
 
 type IPassword interface {
-	Create(userID int32, passwordHash string) (*entity.Password, error)
-	GetByUserID(userID int32) (*entity.Password, error)
-	Update(id int32, passwordHash string) (*entity.Password, error)
+	Create(ctx context.Context, userID int32, passwordHash string) (*entity.Password, error)
+	GetByUserID(ctx context.Context, userID int32) (*entity.Password, error)
+	Update(ctx context.Context, id int32, passwordHash string) (*entity.Password, error)
 }
 
 type Password struct {
@@ -26,7 +27,7 @@ func NewPassword(db *db.DB) *Password {
 	}
 }
 
-func (r *Password) Create(userID int32, passwordHash string) (*entity.Password, error) {
+func (r *Password) Create(ctx context.Context, userID int32, passwordHash string) (*entity.Password, error) {
 	password := &entity.Password{
 		UserID:       userID,
 		PasswordHash: passwordHash,
@@ -36,7 +37,7 @@ func (r *Password) Create(userID int32, passwordHash string) (*entity.Password, 
 	q.Columns().Add("user_id", "password_hash")
 	q.Columns().Arg(userID, passwordHash)
 	q.Returning().Add("id", "created_at", "updated_at")
-	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+	row := r.db.DB.QueryRowContext(ctx, q.String(), q.GetArguments()...)
 
 	err := row.Scan(&password.ID, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
@@ -44,7 +45,7 @@ func (r *Password) Create(userID int32, passwordHash string) (*entity.Password, 
 	}
 	return password, nil
 }
-func (r *Password) GetByUserID(userID int32) (*entity.Password, error) {
+func (r *Password) GetByUserID(ctx context.Context, userID int32) (*entity.Password, error) {
 	password := &entity.Password{
 		UserID: userID,
 	}
@@ -53,7 +54,7 @@ func (r *Password) GetByUserID(userID int32) (*entity.Password, error) {
 	q.Columns().Add("id", "password_hash", "created_at", "updated_at")
 	q.Where().AddExpression("user_id = ?", userID)
 	q.Where().AddExpression("deleted_at IS NULL")
-	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+	row := r.db.DB.QueryRowContext(ctx, q.String(), q.GetArguments()...)
 
 	err := row.Scan(&password.ID, &password.PasswordHash, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
@@ -64,7 +65,7 @@ func (r *Password) GetByUserID(userID int32) (*entity.Password, error) {
 	}
 	return password, nil
 }
-func (r *Password) Update(id int32, passwordHash string) (*entity.Password, error) {
+func (r *Password) Update(ctx context.Context, id int32, passwordHash string) (*entity.Password, error) {
 	password := &entity.Password{
 		ID:           id,
 		PasswordHash: passwordHash,
@@ -76,7 +77,7 @@ func (r *Password) Update(id int32, passwordHash string) (*entity.Password, erro
 	q.Where().AddExpression("id = ?", id)
 	q.Where().AddExpression("deleted_at IS NULL")
 	q.Returning().Add("user_id", "created_at", "updated_at")
-	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+	row := r.db.DB.QueryRowContext(ctx, q.String(), q.GetArguments()...)
 
 	err := row.Scan(&password.UserID, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {

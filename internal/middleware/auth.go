@@ -29,7 +29,8 @@ func (m *AuthMiddleware) RequestMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Validate if cookie is active
-		session, err := m.authService.ValidateCookie(cookie.Value)
+		ctx := r.Context()
+		session, err := m.authService.ValidateCookie(ctx, cookie.Value)
 		if err != nil || session == nil {
 			if errors.Is(err, service.ErrorSessionHasExpired) {
 				http.Error(w, "Session has expired", http.StatusUnauthorized)
@@ -39,7 +40,7 @@ func (m *AuthMiddleware) RequestMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "userID", session.UserID)
+		ctx = context.WithValue(ctx, "userID", session.UserID)
 		ctx = context.WithValue(ctx, "session", session)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

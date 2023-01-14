@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -12,10 +13,10 @@ import (
 )
 
 type IUser interface {
-	GetByID(id int32, showPrivateInfo bool) (*entity.User, error)
-	GetByName(name string) (*entity.User, error)
-	Create(name, displayedName string, invitedByUserID int32) (*entity.User, error)
-	Update(req *dto.UpdateProfileDTO, id int32) (*entity.User, error)
+	GetByID(ctx context.Context, id int32, showPrivateInfo bool) (*entity.User, error)
+	GetByName(ctx context.Context, name string) (*entity.User, error)
+	Create(ctx context.Context, name, displayedName string, invitedByUserID int32) (*entity.User, error)
+	Update(ctx context.Context, req *dto.UpdateProfileDTO, id int32) (*entity.User, error)
 }
 
 type User struct {
@@ -28,7 +29,7 @@ func NewUser(db *db.DB) *User {
 	}
 }
 
-func (r *User) GetByID(id int32, showPrivateInfo bool) (*entity.User, error) {
+func (r *User) GetByID(ctx context.Context, id int32, showPrivateInfo bool) (*entity.User, error) {
 	user := &entity.User{
 		ID: id,
 	}
@@ -40,7 +41,7 @@ func (r *User) GetByID(id int32, showPrivateInfo bool) (*entity.User, error) {
 	}
 	q.Where().AddExpression("id = ?", id)
 	q.Where().AddExpression("deleted_at IS NULL")
-	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+	row := r.db.DB.QueryRowContext(ctx, q.String(), q.GetArguments()...)
 
 	var err error
 	if showPrivateInfo {
@@ -58,7 +59,7 @@ func (r *User) GetByID(id int32, showPrivateInfo bool) (*entity.User, error) {
 	return user, nil
 
 }
-func (r *User) GetByName(name string) (*entity.User, error) {
+func (r *User) GetByName(ctx context.Context, name string) (*entity.User, error) {
 	user := &entity.User{
 		Username: name,
 	}
@@ -67,7 +68,7 @@ func (r *User) GetByName(name string) (*entity.User, error) {
 	q.Columns().Add("id", "displayed_name", "email", "invited_by_user", "created_at", "updated_at", "deleted_at")
 	q.Where().AddExpression("username = ?", name)
 	q.Where().AddExpression("deleted_at IS NULL")
-	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+	row := r.db.DB.QueryRowContext(ctx, q.String(), q.GetArguments()...)
 
 	err := row.Scan(&user.ID, &user.DisplayedName, &user.Email, &user.InvitedByUserID, &user.CreatedAt,
 		&user.UpdatedAt, &user.DeletedAt)
@@ -79,7 +80,7 @@ func (r *User) GetByName(name string) (*entity.User, error) {
 	}
 	return user, nil
 }
-func (r *User) Create(name, displayedName string, invitedByUserID int32) (*entity.User, error) {
+func (r *User) Create(ctx context.Context, name, displayedName string, invitedByUserID int32) (*entity.User, error) {
 	user := &entity.User{
 		Username:        name,
 		DisplayedName:   displayedName,
@@ -90,7 +91,7 @@ func (r *User) Create(name, displayedName string, invitedByUserID int32) (*entit
 	q.Columns().Add("username", "displayed_name", "invited_by_user")
 	q.Columns().Arg(name, displayedName, invitedByUserID)
 	q.Returning().Add("id", "created_at", "updated_at")
-	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+	row := r.db.DB.QueryRowContext(ctx, q.String(), q.GetArguments()...)
 
 	err := row.Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
@@ -98,7 +99,7 @@ func (r *User) Create(name, displayedName string, invitedByUserID int32) (*entit
 	}
 	return user, nil
 }
-func (r *User) Update(req *dto.UpdateProfileDTO, id int32) (*entity.User, error) {
+func (r *User) Update(ctx context.Context, req *dto.UpdateProfileDTO, id int32) (*entity.User, error) {
 	user := &entity.User{
 		ID:            id,
 		DisplayedName: req.DisplayedName,
@@ -112,7 +113,7 @@ func (r *User) Update(req *dto.UpdateProfileDTO, id int32) (*entity.User, error)
 	q.Where().AddExpression("id = ?", id)
 	q.Where().AddExpression("deleted_at IS NULL")
 	q.Returning().Add("username", "invited_by_user", "created_at", "updated_at")
-	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+	row := r.db.DB.QueryRowContext(ctx, q.String(), q.GetArguments()...)
 
 	err := row.Scan(&user.Username, &user.InvitedByUserID, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {

@@ -56,6 +56,8 @@ type AuthRegisterResponse struct {
 //	Responses:
 //	  200: AuthRegisterResponse
 func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	req := &dto.RegisterDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
 	if err != nil {
@@ -70,14 +72,14 @@ func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.service.Register(req)
+	user, err := s.service.Register(ctx, req)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
-	session, err := s.service.GenerateCookie(user.ID)
+	session, err := s.service.GenerateCookie(ctx, user.ID)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -106,6 +108,8 @@ type AuthLoginResponse struct {
 //	Responses:
 //	  200: AuthLoginResponse
 func (s *Auth) Login(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	req := &dto.LoginDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
 	if err != nil {
@@ -120,14 +124,14 @@ func (s *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.service.Login(req)
+	user, err := s.service.Login(ctx, req)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
-	session, err := s.service.GenerateCookie(user.ID)
+	session, err := s.service.GenerateCookie(ctx, user.ID)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -160,9 +164,10 @@ type AuthUserResponse struct {
 //	Responses:
 //	  200: AuthUserResponse
 func (s *Auth) User(w http.ResponseWriter, r *http.Request) {
-	userID := utils.GetUserIDFromContext(r.Context())
+	ctx := r.Context()
+	userID := utils.GetUserIDFromContext(ctx)
 
-	user, err := s.service.GetUserInfo(userID)
+	user, err := s.service.GetUserInfo(ctx, userID)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -190,9 +195,10 @@ type AuthLogoutResponse struct {
 //	Responses:
 //	  200: AuthLogoutResponse
 func (s *Auth) Logout(w http.ResponseWriter, r *http.Request) {
-	session := utils.GetSessionFromContext(r.Context())
+	ctx := r.Context()
+	session := utils.GetSessionFromContext(ctx)
 
-	err := s.service.Logout(session.ID)
+	err := s.service.Logout(ctx, session.ID)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)

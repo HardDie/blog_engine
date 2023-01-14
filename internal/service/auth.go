@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -18,12 +19,12 @@ var (
 )
 
 type IAuth interface {
-	Register(req *dto.RegisterDTO) (*entity.User, error)
-	Login(req *dto.LoginDTO) (*entity.User, error)
-	Logout(sessionID int32) error
-	GenerateCookie(userID int32) (string, error)
-	ValidateCookie(session string) (*entity.Session, error)
-	GetUserInfo(userID int32) (*entity.User, error)
+	Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User, error)
+	Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, error)
+	Logout(ctx context.Context, sessionID int32) error
+	GenerateCookie(ctx context.Context, userID int32) (string, error)
+	ValidateCookie(ctx context.Context, session string) (*entity.Session, error)
+	GetUserInfo(ctx context.Context, userID int32) (*entity.User, error)
 }
 
 type Auth struct {
@@ -45,7 +46,7 @@ func NewAuth(user repository.IUser, password repository.IPassword,
 	}
 }
 
-func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
+func (s *Auth) Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User, error) {
 	s.mutex.Lock()
 	defer func() {
 		s.mutex.Unlock()
@@ -55,7 +56,7 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 	hashInvite := utils.HashSha256(req.Invite)
 
 	// Check if invite exist
-	invite, err := s.inviteRepository.GetByInviteHash(hashInvite)
+	invite, err := s.inviteRepository.GetByInviteHash(ctx, hashInvite)
 	if err != nil {
 		return nil, fmt.Errorf("error while trying get invite: %w", err)
 	}
@@ -65,7 +66,7 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 
 	// Check if invite is not expired
 	if time.Now().Sub(invite.UpdatedAt) > time.Hour*24 {
-		err = s.inviteRepository.Delete(invite.ID)
+		err = s.inviteRepository.Delete(ctx, invite.ID)
 		if err != nil {
 			logger.Error.Printf("Can't delete expired invite [%d]: %v", invite.ID, err.Error())
 		}
@@ -73,7 +74,7 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 	}
 
 	// Check if username is not busy
-	user, err := s.userRepository.GetByName(req.Username)
+	user, err := s.userRepository.GetByName(ctx, req.Username)
 	if err != nil {
 		return nil, fmt.Errorf("error while trying get user: %w", err)
 	}
@@ -82,7 +83,7 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 	}
 
 	// Activating invite
-	invite, err = s.inviteRepository.Activate(invite.ID)
+	invite, err = s.inviteRepository.Activate(ctx, invite.ID)
 	if err != nil || invite == nil {
 		return nil, fmt.Errorf("error while activating invite: %w", err)
 	}
@@ -94,22 +95,22 @@ func (s *Auth) Register(req *dto.RegisterDTO) (*entity.User, error) {
 	}
 
 	// Create a user
-	user, err = s.userRepository.Create(req.Username, req.DisplayedName, invite.UserID)
+	user, err = s.userRepository.Create(ctx, req.Username, req.DisplayedName, invite.UserID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create a password
-	_, err = s.passwordRepository.Create(user.ID, hashPassword)
+	_, err = s.passwordRepository.Create(ctx, user.ID, hashPassword)
 	if err != nil {
 		return nil, err
 	}
 
 	return user, nil
 }
-func (s *Auth) Login(req *dto.LoginDTO) (*entity.User, error) {
+func (s *Auth) Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, error) {
 	// Check if such user exist
-	user, err := s.userRepository.GetByName(req.Username)
+	user, err := s.userRepository.GetByName(ctx, req.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +119,7 @@ func (s *Auth) Login(req *dto.LoginDTO) (*entity.User, error) {
 	}
 
 	// Get password from DB
-	password, err := s.passwordRepository.GetByUserID(user.ID)
+	password, err := s.passwordRepository.GetByUserID(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -133,10 +134,10 @@ func (s *Auth) Login(req *dto.LoginDTO) (*entity.User, error) {
 
 	return user, nil
 }
-func (s *Auth) Logout(sessionID int32) error {
-	return s.sessionRepository.DeleteByID(sessionID)
+func (s *Auth) Logout(ctx context.Context, sessionID int32) error {
+	return s.sessionRepository.DeleteByID(ctx, sessionID)
 }
-func (s *Auth) GenerateCookie(userID int32) (string, error) {
+func (s *Auth) GenerateCookie(ctx context.Context, userID int32) (string, error) {
 	// Generate session key
 	sessionKey, err := utils.GenerateSessionKey()
 	if err != nil {
@@ -144,17 +145,17 @@ func (s *Auth) GenerateCookie(userID int32) (string, error) {
 	}
 
 	// Write session to DB
-	_, err = s.sessionRepository.CreateOrUpdate(userID, utils.HashSha256(sessionKey))
+	_, err = s.sessionRepository.CreateOrUpdate(ctx, userID, utils.HashSha256(sessionKey))
 	if err != nil {
 		return "", fmt.Errorf("write session to DB: %w", err)
 	}
 
 	return sessionKey, nil
 }
-func (s *Auth) ValidateCookie(sessionToken string) (*entity.Session, error) {
+func (s *Auth) ValidateCookie(ctx context.Context, sessionToken string) (*entity.Session, error) {
 	// Check if session exist
 	sessionHash := utils.HashSha256(sessionToken)
-	session, err := s.sessionRepository.GetByUserID(sessionHash)
+	session, err := s.sessionRepository.GetByUserID(ctx, sessionHash)
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +166,6 @@ func (s *Auth) ValidateCookie(sessionToken string) (*entity.Session, error) {
 	}
 	return session, nil
 }
-func (s *Auth) GetUserInfo(userID int32) (*entity.User, error) {
-	return s.userRepository.GetByID(userID, true)
+func (s *Auth) GetUserInfo(ctx context.Context, userID int32) (*entity.User, error) {
+	return s.userRepository.GetByID(ctx, userID, true)
 }

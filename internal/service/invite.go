@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/HardDie/blog_engine/internal/repository"
@@ -8,8 +9,8 @@ import (
 )
 
 type IInvite interface {
-	Generate(userID int32) (string, error)
-	Revoke(userID int32) error
+	Generate(ctx context.Context, userID int32) (string, error)
+	Revoke(ctx context.Context, userID int32) error
 }
 
 type Invite struct {
@@ -24,7 +25,7 @@ func NewInvite(user repository.IUser, invite repository.IInvite) *Invite {
 	}
 }
 
-func (s *Invite) Generate(userID int32) (string, error) {
+func (s *Invite) Generate(ctx context.Context, userID int32) (string, error) {
 	// Generate invite
 	inviteCode, err := utils.UUIDGenerate()
 	if err != nil {
@@ -33,21 +34,21 @@ func (s *Invite) Generate(userID int32) (string, error) {
 	// Hashing invite for DB
 	inviteHash := utils.HashSha256(inviteCode)
 	// Write hash of invite into DB
-	_, err = s.inviteRepository.CreateOrUpdate(userID, inviteHash)
+	_, err = s.inviteRepository.CreateOrUpdate(ctx, userID, inviteHash)
 	if err != nil {
 		return "", err
 	}
 	return inviteCode, nil
 }
-func (s *Invite) Revoke(userID int32) error {
-	invite, err := s.inviteRepository.GetActiveByUserID(userID)
+func (s *Invite) Revoke(ctx context.Context, userID int32) error {
+	invite, err := s.inviteRepository.GetActiveByUserID(ctx, userID)
 	if err != nil {
 		return err
 	}
 	if invite == nil {
 		return fmt.Errorf("no active invites")
 	}
-	err = s.inviteRepository.Delete(invite.ID)
+	err = s.inviteRepository.Delete(ctx, invite.ID)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"strings"
 
 	"github.com/dimonrus/gosql"
@@ -12,10 +13,10 @@ import (
 )
 
 type IPost interface {
-	List(filter *dto.ListPostFilter) ([]*entity.Post, int32, error)
-	Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
-	Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error)
-	GetByID(id int32, userID *int32) (*entity.Post, error)
+	List(ctx context.Context, filter *dto.ListPostFilter) ([]*entity.Post, int32, error)
+	Create(ctx context.Context, req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
+	Edit(ctx context.Context, req *dto.EditPostDTO, userID int32) (*entity.Post, error)
+	GetByID(ctx context.Context, id int32, userID *int32) (*entity.Post, error)
 }
 
 type Post struct {
@@ -28,7 +29,7 @@ func NewPost(db *db.DB) *Post {
 	}
 }
 
-func (r *Post) List(filter *dto.ListPostFilter) ([]*entity.Post, int32, error) {
+func (r *Post) List(ctx context.Context, filter *dto.ListPostFilter) ([]*entity.Post, int32, error) {
 	var res []*entity.Post
 	var total int32
 
@@ -48,7 +49,7 @@ func (r *Post) List(filter *dto.ListPostFilter) ([]*entity.Post, int32, error) {
 		q.SetPagination(utils.GetPagination(filter.Limit, filter.Page))
 	}
 	q.AddOrder("id DESC")
-	rows, err := r.db.DB.Query(q.String(), q.GetArguments()...)
+	rows, err := r.db.DB.QueryContext(ctx, q.String(), q.GetArguments()...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -73,7 +74,7 @@ func (r *Post) List(filter *dto.ListPostFilter) ([]*entity.Post, int32, error) {
 
 	return res, total, nil
 }
-func (r *Post) Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error) {
+func (r *Post) Create(ctx context.Context, req *dto.CreatePostDTO, userID int32) (*entity.Post, error) {
 	post := &entity.Post{
 		UserID:      userID,
 		Title:       req.Title,
@@ -88,7 +89,7 @@ func (r *Post) Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error
 	q.Columns().Add("user_id", "title", "short", "body", "tags", "is_published")
 	q.Columns().Arg(userID, req.Title, req.Short, req.Body, tags, req.IsPublished)
 	q.Returning().Add("id", "created_at", "updated_at")
-	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+	row := r.db.DB.QueryRowContext(ctx, q.String(), q.GetArguments()...)
 
 	err := row.Scan(&post.ID, &post.CreatedAt, &post.UpdatedAt)
 	if err != nil {
@@ -96,7 +97,7 @@ func (r *Post) Create(req *dto.CreatePostDTO, userID int32) (*entity.Post, error
 	}
 	return post, nil
 }
-func (r *Post) Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
+func (r *Post) Edit(ctx context.Context, req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
 	post := &entity.Post{
 		ID:          req.ID,
 		UserID:      userID,
@@ -119,7 +120,7 @@ func (r *Post) Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
 	q.Where().AddExpression("deleted_at IS NULL")
 	q.Where().AddExpression("user_id = ?", userID)
 	q.Returning().Add("created_at", "updated_at")
-	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+	row := r.db.DB.QueryRowContext(ctx, q.String(), q.GetArguments()...)
 
 	err := row.Scan(&post.CreatedAt, &post.UpdatedAt)
 	if err != nil {
@@ -127,7 +128,7 @@ func (r *Post) Edit(req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
 	}
 	return post, nil
 }
-func (r *Post) GetByID(id int32, userID *int32) (*entity.Post, error) {
+func (r *Post) GetByID(ctx context.Context, id int32, userID *int32) (*entity.Post, error) {
 	post := &entity.Post{
 		ID: id,
 	}
@@ -143,7 +144,7 @@ func (r *Post) GetByID(id int32, userID *int32) (*entity.Post, error) {
 		// Display any post of current user
 		q.Where().AddExpression("user_id = ?", userID)
 	}
-	row := r.db.DB.QueryRow(q.String(), q.GetArguments()...)
+	row := r.db.DB.QueryRowContext(ctx, q.String(), q.GetArguments()...)
 
 	var tags string
 	err := row.Scan(&post.UserID, &post.Title, &post.Short, &post.Body, &tags, &post.IsPublished, &post.CreatedAt,

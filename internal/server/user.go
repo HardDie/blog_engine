@@ -57,6 +57,7 @@ type UserGetResponse struct {
 //	Responses:
 //	  200: UserGetResponse
 func (s *User) Get(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	userID, err := utils.GetInt32FromPath(r, "id")
 	if err != nil {
 		logger.Error.Printf(err.Error())
@@ -64,7 +65,7 @@ func (s *User) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.service.Get(userID)
+	user, err := s.service.Get(ctx, userID)
 	if err != nil {
 		logger.Error.Println("Can't get post:", err.Error())
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
@@ -100,7 +101,8 @@ type UserPasswordResponse struct {
 //	Responses:
 //	  200: UserPasswordResponse
 func (s *User) Password(w http.ResponseWriter, r *http.Request) {
-	userID := utils.GetUserIDFromContext(r.Context())
+	ctx := r.Context()
+	userID := utils.GetUserIDFromContext(ctx)
 
 	req := &dto.UpdatePasswordDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
@@ -116,7 +118,7 @@ func (s *User) Password(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.service.Password(req, userID)
+	err = s.service.Password(ctx, req, userID)
 	if err != nil {
 		logger.Error.Println("Can't update password:", err.Error())
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
@@ -143,7 +145,8 @@ type UserProfileResponse struct {
 //	Responses:
 //	  200: UserProfileResponse
 func (s *User) Profile(w http.ResponseWriter, r *http.Request) {
-	userID := utils.GetUserIDFromContext(r.Context())
+	ctx := r.Context()
+	userID := utils.GetUserIDFromContext(ctx)
 
 	req := &dto.UpdateProfileDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
@@ -159,7 +162,7 @@ func (s *User) Profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.service.Profile(req, userID)
+	user, err := s.service.Profile(ctx, req, userID)
 	if err != nil {
 		logger.Error.Println("Can't update user profile:", err.Error())
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
