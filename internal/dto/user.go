@@ -1,5 +1,9 @@
 package dto
 
+type GetUserDTO struct {
+	ID int32 `json:"id" validate:"gt=0"`
+}
+
 type UpdatePasswordDTO struct {
 	OldPassword string `json:"oldPassword" validate:"required"`
 	NewPassword string `json:"newPassword" validate:"required,nefield=OldPassword"`

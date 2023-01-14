@@ -58,10 +58,20 @@ type UserGetResponse struct {
 //	  200: UserGetResponse
 func (s *User) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
 	userID, err := utils.GetInt32FromPath(r, "id")
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Bad id in path", http.StatusBadRequest)
+		return
+	}
+	req := dto.GetUserDTO{
+		ID: userID,
+	}
+
+	err = GetValidator().Struct(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

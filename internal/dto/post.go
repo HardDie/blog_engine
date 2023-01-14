@@ -14,8 +14,12 @@ type FeedPostDTO struct {
 	Query string `json:"query"`
 }
 
+type PublicGetDTO struct {
+	ID int32 `json:"id" validate:"gt=0"`
+}
+
 type EditPostDTO struct {
-	ID          int32    `json:"-"`
+	ID          int32    `json:"-" validate:"gt=0"`
 	Title       string   `json:"title" validate:"required"`
 	Short       string   `json:"short" validate:"required"`
 	Body        string   `json:"body" validate:"required"`

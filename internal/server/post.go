@@ -112,14 +112,23 @@ type PostPublicGetResponse struct {
 //	  200: PostPublicGetResponse
 func (s *Post) PublicGet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	id, err := utils.GetInt32FromPath(r, "id")
+	postID, err := utils.GetInt32FromPath(r, "id")
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Bad id in path", http.StatusBadRequest)
 		return
 	}
+	req := &dto.PublicGetDTO{
+		ID: postID,
+	}
 
-	post, err := s.service.PublicGet(ctx, id)
+	err = GetValidator().Struct(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	post, err := s.service.PublicGet(ctx, postID)
 	if err != nil {
 		logger.Error.Println("Can't get post:", err.Error())
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
@@ -226,16 +235,16 @@ func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = GetValidator().Struct(req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	req.ID, err = utils.GetInt32FromPath(r, "id")
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Bad id in path", http.StatusBadRequest)
+		return
+	}
+
+	err = GetValidator().Struct(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
