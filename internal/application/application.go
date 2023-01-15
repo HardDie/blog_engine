@@ -2,6 +2,7 @@ package application
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -90,5 +91,9 @@ func Get() (*Application, error) {
 }
 
 func (app *Application) Run() error {
-	return http.ListenAndServe(app.Cfg.Port, app.Router)
+	srv := &http.Server{
+		Handler: http.TimeoutHandler(app.Router, time.Second*time.Duration(app.Cfg.RequestTimeout), "Request timeout"),
+		Addr:    app.Cfg.Port,
+	}
+	return srv.ListenAndServe()
 }
