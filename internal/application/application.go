@@ -52,7 +52,7 @@ func Get() (*Application, error) {
 	postRepository := repository.NewPost(app.DB)
 
 	// Init services
-	authService := service.NewAuth(userRepository, passwordRepository, sessionRepository, inviteRepository)
+	authService := service.NewAuth(app.Cfg, userRepository, passwordRepository, sessionRepository, inviteRepository)
 
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
@@ -60,7 +60,7 @@ func Get() (*Application, error) {
 
 	// Register servers
 	authRouter := v1Router.PathPrefix("/auth").Subrouter()
-	authServer := server.NewAuth(authService)
+	authServer := server.NewAuth(app.Cfg, authService)
 	authServer.RegisterPublicRouter(authRouter)
 	authServer.RegisterPrivateRouter(authRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 

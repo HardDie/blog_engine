@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/HardDie/blog_engine/internal/config"
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
@@ -33,12 +34,14 @@ type Auth struct {
 	sessionRepository  repository.ISession
 	inviteRepository   repository.IInvite
 
+	cfg   *config.Config
 	mutex sync.Mutex
 }
 
-func NewAuth(user repository.IUser, password repository.IPassword,
+func NewAuth(cfg *config.Config, user repository.IUser, password repository.IPassword,
 	session repository.ISession, invite repository.IInvite) *Auth {
 	return &Auth{
+		cfg:                cfg,
 		userRepository:     user,
 		passwordRepository: password,
 		sessionRepository:  session,
@@ -127,11 +130,36 @@ func (s *Auth) Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, erro
 		return nil, fmt.Errorf("password for user not exist")
 	}
 
+	// Check if the password is locked after failed attempts
+	if password.FailedAttempts >= int32(s.cfg.PwdMaxAttempts) {
+		// Check if the password block time has expired
+		if time.Now().Sub(password.UpdatedAt) <= time.Hour*time.Duration(s.cfg.PwdBlockTime) {
+			return nil, fmt.Errorf("user was blocked after failed attempts")
+		}
+		// If the blocking time has expired, reset the counter of failed attempts
+		password, err = s.passwordRepository.ResetFailedAttempts(ctx, password.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error resetting the counter of failed attempts: %w", err)
+		}
+	}
+
 	// Check if password is correct
 	if !utils.HashBcryptCompare(req.Password, password.PasswordHash) {
+		// Increased number of failed attempts
+		_, err = s.passwordRepository.IncreaseFailedAttempts(ctx, password.ID)
+		if err != nil {
+			logger.Error.Println("Error increasing failed attempts:", err.Error())
+		}
 		return nil, fmt.Errorf("invalid password")
 	}
 
+	// Reset the failed attempts counter after the first successful attempt
+	if password.FailedAttempts > 0 {
+		_, err = s.passwordRepository.ResetFailedAttempts(ctx, password.ID)
+		if err != nil {
+			logger.Error.Println("Error flushing failed attempts:", err.Error())
+		}
+	}
 	return user, nil
 }
 func (s *Auth) Logout(ctx context.Context, sessionID int32) error {

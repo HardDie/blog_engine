@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/HardDie/blog_engine/internal/config"
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
@@ -14,10 +15,12 @@ import (
 
 type Auth struct {
 	service service.IAuth
+	cfg     *config.Config
 }
 
-func NewAuth(service service.IAuth) *Auth {
+func NewAuth(cfg *config.Config, service service.IAuth) *Auth {
 	return &Auth{
+		cfg:     cfg,
 		service: service,
 	}
 }
