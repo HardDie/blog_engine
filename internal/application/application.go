@@ -56,12 +56,13 @@ func Get() (*Application, error) {
 
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
+	timeoutMiddleware := middleware.NewTimeoutRequestMiddleware(time.Duration(app.Cfg.RequestTimeout) * time.Second)
 
 	// Register servers
 	authRouter := v1Router.PathPrefix("/auth").Subrouter()
 	authServer := server.NewAuth(authService)
 	authServer.RegisterPublicRouter(authRouter)
-	authServer.RegisterPrivateRouter(authRouter, authMiddleware.RequestMiddleware)
+	authServer.RegisterPrivateRouter(authRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	inviteRouter := v1Router.PathPrefix("/invites").Subrouter()
 	server.NewInvite(
@@ -69,7 +70,7 @@ func Get() (*Application, error) {
 			userRepository,
 			inviteRepository,
 		),
-	).RegisterPrivateRouter(inviteRouter, authMiddleware.RequestMiddleware)
+	).RegisterPrivateRouter(inviteRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	postsRouter := v1Router.PathPrefix("/posts").Subrouter()
 	postServer := server.NewPost(
@@ -77,23 +78,19 @@ func Get() (*Application, error) {
 			postRepository,
 		),
 	)
-	postServer.RegisterPublicRouter(postsRouter)
-	postServer.RegisterPrivateRouter(postsRouter, authMiddleware.RequestMiddleware)
+	postServer.RegisterPublicRouter(postsRouter, timeoutMiddleware.RequestMiddleware)
+	postServer.RegisterPrivateRouter(postsRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	userRouter := v1Router.PathPrefix("/user").Subrouter()
 	userServer := server.NewUser(
 		service.NewUser(userRepository, passwordRepository),
 	)
-	userServer.RegisterPublicRouter(userRouter)
-	userServer.RegisterPrivateRouter(userRouter, authMiddleware.RequestMiddleware)
+	userServer.RegisterPublicRouter(userRouter, timeoutMiddleware.RequestMiddleware)
+	userServer.RegisterPrivateRouter(userRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	return app, nil
 }
 
 func (app *Application) Run() error {
-	srv := &http.Server{
-		Handler: http.TimeoutHandler(app.Router, time.Second*time.Duration(app.Cfg.RequestTimeout), "Request timeout"),
-		Addr:    app.Cfg.Port,
-	}
-	return srv.ListenAndServe()
+	return http.ListenAndServe(app.Cfg.Port, app.Router)
 }

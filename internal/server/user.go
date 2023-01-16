@@ -21,9 +21,10 @@ func NewUser(service service.IUser) *User {
 		service: service,
 	}
 }
-func (s *User) RegisterPublicRouter(router *mux.Router) {
+func (s *User) RegisterPublicRouter(router *mux.Router, middleware ...mux.MiddlewareFunc) {
 	userRouter := router.PathPrefix("").Subrouter()
 	userRouter.HandleFunc("/{id:[0-9]+}", s.Get).Methods(http.MethodGet)
+	userRouter.Use(middleware...)
 }
 func (s *User) RegisterPrivateRouter(router *mux.Router, middleware ...mux.MiddlewareFunc) {
 	userRouter := router.PathPrefix("").Subrouter()

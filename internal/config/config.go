@@ -29,7 +29,7 @@ func Get() *Config {
 		Port:           getEnv("PORT", ":8080"),
 		PwdMaxAttempts: getEnvAsInt("PWD_MAX_ATTEMPTS", 5),
 		PwdBlockTime:   getEnvAsInt("PWD_BLOCK_TIME", 24),
-		RequestTimeout: getEnvAsInt("REQUEST_TIMEOUT", 5),
+		RequestTimeout: getEnvAsInt("REQUEST_TIMEOUT", 3),
 	}
 }
 

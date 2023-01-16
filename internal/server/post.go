@@ -21,10 +21,11 @@ func NewPost(service service.IPost) *Post {
 		service: service,
 	}
 }
-func (s *Post) RegisterPublicRouter(router *mux.Router) {
+func (s *Post) RegisterPublicRouter(router *mux.Router, middleware ...mux.MiddlewareFunc) {
 	postRouter := router.PathPrefix("").Subrouter()
 	postRouter.HandleFunc("/feed", s.Feed).Methods(http.MethodGet)
 	postRouter.HandleFunc("/{id:[0-9]+}", s.PublicGet).Methods(http.MethodGet)
+	postRouter.Use(middleware...)
 }
 func (s *Post) RegisterPrivateRouter(router *mux.Router, middleware ...mux.MiddlewareFunc) {
 	postRouter := router.PathPrefix("").Subrouter()
