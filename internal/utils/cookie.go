@@ -17,8 +17,9 @@ func SetSessionCookie(session string, w http.ResponseWriter) {
 		Value:    session,
 		HttpOnly: true,
 		// TODO: For prod use only http.SameSiteStrictMode
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		// TODO: For prod use only true
+		Secure: false,
 	}
 	http.SetCookie(w, &cookie)
 }
@@ -30,8 +31,9 @@ func DeleteSessionCookie(w http.ResponseWriter) {
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 		// TODO: For prod use only http.SameSiteStrictMode
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		// TODO: For prod use only true
+		Secure: false,
 	}
 	http.SetCookie(w, &cookie)
 }
