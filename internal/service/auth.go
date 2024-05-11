@@ -13,6 +13,7 @@ import (
 	"github.com/HardDie/blog_engine/internal/logger"
 	"github.com/HardDie/blog_engine/internal/repository"
 	"github.com/HardDie/blog_engine/internal/repository/invite"
+	"github.com/HardDie/blog_engine/internal/repository/password"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
@@ -31,7 +32,7 @@ type IAuth interface {
 
 type Auth struct {
 	userRepository     repository.IUser
-	passwordRepository repository.IPassword
+	passwordRepository password.IPassword
 	sessionRepository  repository.ISession
 	inviteRepository   invite.IInvite
 
@@ -39,7 +40,7 @@ type Auth struct {
 	mutex sync.Mutex
 }
 
-func NewAuth(cfg *config.Config, user repository.IUser, password repository.IPassword,
+func NewAuth(cfg *config.Config, user repository.IUser, password password.IPassword,
 	session repository.ISession, invite invite.IInvite) *Auth {
 	return &Auth{
 		cfg:                cfg,

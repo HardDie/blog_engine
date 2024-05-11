@@ -7,6 +7,7 @@ import (
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/repository"
+	"github.com/HardDie/blog_engine/internal/repository/password"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
@@ -19,10 +20,10 @@ type IUser interface {
 
 type User struct {
 	userRepository     repository.IUser
-	passwordRepository repository.IPassword
+	passwordRepository password.IPassword
 }
 
-func NewUser(repository repository.IUser, password repository.IPassword) *User {
+func NewUser(repository repository.IUser, password password.IPassword) *User {
 	return &User{
 		userRepository:     repository,
 		passwordRepository: password,

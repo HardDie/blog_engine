@@ -1,9 +1,10 @@
-package repository
+package password
 
 import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/dimonrus/gosql"
 
@@ -23,7 +24,7 @@ type Password struct {
 	db *db.DB
 }
 
-func NewPassword(db *db.DB) *Password {
+func New(db *db.DB) *Password {
 	return &Password{
 		db: db,
 	}
@@ -43,7 +44,7 @@ func (r *Password) Create(ctx context.Context, userID int32, passwordHash string
 
 	err := row.Scan(&password.ID, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Password.Create() Scan: %w", err)
 	}
 	return password, nil
 }
@@ -61,9 +62,9 @@ func (r *Password) GetByUserID(ctx context.Context, userID int32) (*entity.Passw
 	err := row.Scan(&password.ID, &password.PasswordHash, &password.FailedAttempts, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return nil, ErrorNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("Password.GetByUserID() Scan: %w", err)
 	}
 	return password, nil
 }
@@ -83,7 +84,7 @@ func (r *Password) Update(ctx context.Context, id int32, passwordHash string) (*
 
 	err := row.Scan(&password.UserID, &password.FailedAttempts, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Password.Update() Scan: %w", err)
 	}
 	return password, nil
 }
@@ -102,7 +103,7 @@ func (r *Password) IncreaseFailedAttempts(ctx context.Context, id int32) (*entit
 
 	err := row.Scan(&password.UserID, &password.PasswordHash, &password.FailedAttempts, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Password.IncreaseFailedAttempts() Scan: %w", err)
 	}
 	return password, nil
 }
@@ -121,7 +122,11 @@ func (r *Password) ResetFailedAttempts(ctx context.Context, id int32) (*entity.P
 
 	err := row.Scan(&password.UserID, &password.PasswordHash, &password.FailedAttempts, &password.CreatedAt, &password.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Passowrd.ResetFailedAttempts() Scan: %w", err)
 	}
 	return password, nil
 }
+
+var (
+	ErrorNotFound = errors.New("password not found")
+)
