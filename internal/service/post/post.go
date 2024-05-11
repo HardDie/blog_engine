@@ -52,7 +52,6 @@ func (p *Post) PublicGet(ctx context.Context, id int32) (*entity.Post, error) {
 	}
 	return resp, nil
 }
-
 func (p *Post) Create(ctx context.Context, req *dto.CreatePostDTO, userID int32) (*entity.Post, error) {
 	resp, err := p.postRepository.Create(ctx, req, userID)
 	if err != nil {

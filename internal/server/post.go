@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -8,17 +9,17 @@ import (
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
-	"github.com/HardDie/blog_engine/internal/service/post"
+	servicePost "github.com/HardDie/blog_engine/internal/service/post"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
 type Post struct {
-	service post.IPost
+	postService servicePost.IPost
 }
 
-func NewPost(service post.IPost) *Post {
+func NewPost(post servicePost.IPost) *Post {
 	return &Post{
-		service: service,
+		postService: post,
 	}
 }
 func (s *Post) RegisterPublicRouter(router *mux.Router, middleware ...mux.MiddlewareFunc) {
@@ -70,14 +71,18 @@ func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 
 	err := GetValidator().Struct(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Validation",
+			Data:  err.Error(),
+		})
 		return
 	}
 
-	posts, total, err := s.service.Feed(ctx, req)
+	posts, total, err := s.postService.Feed(ctx, req)
 	if err != nil {
-		logger.Error.Println("Can't get feed:", err.Error())
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		logger.Error.Printf("Feed() Feed: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	meta := &utils.Meta{
@@ -87,7 +92,7 @@ func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 	}
 	err = utils.ResponseWithMeta(w, posts, meta)
 	if err != nil {
-		logger.Error.Println(err.Error())
+		logger.Error.Printf("Feed() ResponseWithMeta: %s", err.Error())
 	}
 }
 
@@ -115,8 +120,10 @@ func (s *Post) PublicGet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	postID, err := utils.GetInt32FromPath(r, "id")
 	if err != nil {
-		logger.Error.Printf(err.Error())
-		http.Error(w, "Bad id in path", http.StatusBadRequest)
+		logger.Error.Printf("PublicGet() GetInt32FromPath: %s", err.Error())
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Bad id in path",
+		})
 		return
 	}
 	req := &dto.PublicGetDTO{
@@ -125,20 +132,32 @@ func (s *Post) PublicGet(w http.ResponseWriter, r *http.Request) {
 
 	err = GetValidator().Struct(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Validation",
+			Data:  err.Error(),
+		})
 		return
 	}
 
-	post, err := s.service.PublicGet(ctx, postID)
+	post, err := s.postService.PublicGet(ctx, postID)
 	if err != nil {
-		logger.Error.Println("Can't get post:", err.Error())
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, servicePost.ErrorPostNotFound):
+			err = utils.WriteJSONHTTPResponse(w, http.StatusNotFound, JSONResponse{
+				Error: "Post not found",
+			})
+			return
+		}
+		logger.Error.Printf("PublicGet() PublicGet: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	err = utils.Response(w, post)
+	err = utils.WriteJSONHTTPResponse(w, http.StatusOK, JSONResponse{
+		Data: post,
+	})
 	if err != nil {
-		logger.Error.Println(err.Error())
+		logger.Error.Printf("PublicGet() WriteJSONHTTPResponse: %s", err.Error())
 	}
 }
 
@@ -167,7 +186,7 @@ type PostCreateResponse struct {
 // # Post creation form
 //
 //	Responses:
-//	  200: PostCreateResponse
+//	  201: PostCreateResponse
 func (s *Post) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromContext(ctx)
@@ -175,28 +194,32 @@ func (s *Post) Create(w http.ResponseWriter, r *http.Request) {
 	req := &dto.CreatePostDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
 	if err != nil {
-		logger.Error.Printf(err.Error())
-		http.Error(w, "Can't parse request", http.StatusBadRequest)
+		logger.Error.Printf("Create() ParseJsonFromHTTPRequest: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
 	err = GetValidator().Struct(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Validation",
+			Data:  err.Error(),
+		})
 		return
 	}
 
-	post, err := s.service.Create(ctx, req, userID)
+	post, err := s.postService.Create(ctx, req, userID)
 	if err != nil {
-		logger.Error.Println("Can't create post:", err.Error())
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		logger.Error.Printf("Create() Create: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	err = utils.Response(w, post)
+	err = utils.WriteJSONHTTPResponse(w, http.StatusCreated, JSONResponse{
+		Data: post,
+	})
 	if err != nil {
-		logger.Error.Println(err.Error())
+		logger.Error.Printf("Create() WriteJSONHTTPResponse: %s", err.Error())
 	}
 }
 
@@ -231,34 +254,41 @@ func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
 	req := &dto.EditPostDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
 	if err != nil {
-		logger.Error.Printf(err.Error())
-		http.Error(w, "Can't parse request", http.StatusBadRequest)
+		logger.Error.Printf("Edit() ParseJsonFromHTTPRequest: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
 	req.ID, err = utils.GetInt32FromPath(r, "id")
 	if err != nil {
-		logger.Error.Printf(err.Error())
-		http.Error(w, "Bad id in path", http.StatusBadRequest)
+		logger.Error.Printf("Edit() GetInt32FromPath: %s", err.Error())
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Bad id in path",
+		})
 		return
 	}
 
 	err = GetValidator().Struct(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Validation",
+			Data:  err.Error(),
+		})
 		return
 	}
 
-	post, err := s.service.Edit(ctx, req, userID)
+	post, err := s.postService.Edit(ctx, req, userID)
 	if err != nil {
-		logger.Error.Println("Can't edit post:", err.Error())
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		logger.Error.Printf("Edit() Edit: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	err = utils.Response(w, post)
+	err = utils.WriteJSONHTTPResponse(w, http.StatusOK, JSONResponse{
+		Data: post,
+	})
 	if err != nil {
-		logger.Error.Println(err.Error())
+		logger.Error.Printf("Edit() WriteJSONHTTPResponse: %s", err.Error())
 	}
 }
 
@@ -294,14 +324,17 @@ func (s *Post) List(w http.ResponseWriter, r *http.Request) {
 
 	err := GetValidator().Struct(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Validation",
+			Data:  err.Error(),
+		})
 		return
 	}
 
-	posts, total, err := s.service.List(ctx, req, userID)
+	posts, total, err := s.postService.List(ctx, req, userID)
 	if err != nil {
-		logger.Error.Println("Can't get list of posts:", err.Error())
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		logger.Error.Printf("List() List: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
 	meta := &utils.Meta{
@@ -311,6 +344,6 @@ func (s *Post) List(w http.ResponseWriter, r *http.Request) {
 	}
 	err = utils.ResponseWithMeta(w, posts, meta)
 	if err != nil {
-		logger.Error.Println(err.Error())
+		logger.Error.Printf("List() ResponseWithMeta: %s", err.Error())
 	}
 }

@@ -37,6 +37,10 @@ type InviteGenerateRequest struct {
 
 // swagger:response InviteGenerateResponse
 type InviteGenerateResponse struct {
+	// In: body
+	Body struct {
+		Data string `json:"data"`
+	}
 }
 
 // swagger:route GET /api/v1/invites/generate Invite InviteGenerateRequest
