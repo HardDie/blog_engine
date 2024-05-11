@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/dimonrus/gosql v0.6.3
 	github.com/glebarez/go-sqlite v1.19.5
+	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/mux"
 
 	"github.com/HardDie/blog_engine/internal/config"
@@ -33,7 +34,7 @@ func Get() (*Application, error) {
 		Cfg:    config.Get(),
 		Router: mux.NewRouter(),
 	}
-	app.Router.Use(middleware.CorsMiddleware)
+	app.Router.Use(chiMiddleware.Logger, middleware.CorsMiddleware)
 	app.Router.MethodNotAllowedHandler = http.HandlerFunc(notAllowed)
 
 	// Init DB
