@@ -35,11 +35,11 @@ func Get() (*Application, error) {
 		Router: mux.NewRouter(),
 	}
 	app.Router.Use(
+		middleware.CorsMiddleware,
 		chiMiddleware.RequestID,
 		chiMiddleware.RealIP,
 		chiMiddleware.Logger,
 		chiMiddleware.Recoverer,
-		middleware.CorsMiddleware,
 	)
 	app.Router.MethodNotAllowedHandler = http.HandlerFunc(notAllowed)
 
@@ -75,27 +75,27 @@ func Get() (*Application, error) {
 
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
-	timeoutMiddleware := middleware.NewTimeoutRequestMiddleware(time.Duration(app.Cfg.RequestTimeout) * time.Second)
+	timeoutMiddleware := chiMiddleware.Timeout(time.Duration(app.Cfg.RequestTimeout) * time.Second)
 
 	// Register servers
 	authRouter := v1Router.PathPrefix("/auth").Subrouter()
 	authServer := server.NewAuth(app.Cfg, authService)
 	authServer.RegisterPublicRouter(authRouter)
-	authServer.RegisterPrivateRouter(authRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
+	authServer.RegisterPrivateRouter(authRouter, timeoutMiddleware, authMiddleware.RequestMiddleware)
 
 	inviteRouter := v1Router.PathPrefix("/invites").Subrouter()
 	inviteServer := server.NewInvite(inviteService)
-	inviteServer.RegisterPrivateRouter(inviteRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
+	inviteServer.RegisterPrivateRouter(inviteRouter, timeoutMiddleware, authMiddleware.RequestMiddleware)
 
 	postsRouter := v1Router.PathPrefix("/posts").Subrouter()
 	postServer := server.NewPost(postService)
-	postServer.RegisterPublicRouter(postsRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware)
-	postServer.RegisterPrivateRouter(postsRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
+	postServer.RegisterPublicRouter(postsRouter, timeoutMiddleware)
+	postServer.RegisterPrivateRouter(postsRouter, timeoutMiddleware, authMiddleware.RequestMiddleware)
 
 	userRouter := v1Router.PathPrefix("/user").Subrouter()
 	userServer := server.NewUser(userService)
-	userServer.RegisterPublicRouter(userRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware)
-	userServer.RegisterPrivateRouter(userRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
+	userServer.RegisterPublicRouter(userRouter, timeoutMiddleware)
+	userServer.RegisterPrivateRouter(userRouter, timeoutMiddleware, authMiddleware.RequestMiddleware)
 
 	return app, nil
 }
