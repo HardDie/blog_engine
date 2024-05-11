@@ -19,6 +19,7 @@ import (
 	"github.com/HardDie/blog_engine/internal/service"
 	serviceAuth "github.com/HardDie/blog_engine/internal/service/auth"
 	serviceInvite "github.com/HardDie/blog_engine/internal/service/invite"
+	servicePost "github.com/HardDie/blog_engine/internal/service/post"
 )
 
 type Application struct {
@@ -60,6 +61,7 @@ func Get() (*Application, error) {
 	// Init services
 	authService := serviceAuth.New(app.Cfg, userRepository, passwordRepository, sessionRepository, inviteRepository)
 	inviteService := serviceInvite.New(userRepository, inviteRepository)
+	postService := servicePost.New(postRepository)
 
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
@@ -72,16 +74,11 @@ func Get() (*Application, error) {
 	authServer.RegisterPrivateRouter(authRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	inviteRouter := v1Router.PathPrefix("/invites").Subrouter()
-	server.NewInvite(
-		inviteService,
-	).RegisterPrivateRouter(inviteRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
+	inviteServer := server.NewInvite(inviteService)
+	inviteServer.RegisterPrivateRouter(inviteRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	postsRouter := v1Router.PathPrefix("/posts").Subrouter()
-	postServer := server.NewPost(
-		service.NewPost(
-			postRepository,
-		),
-	)
+	postServer := server.NewPost(postService)
 	postServer.RegisterPublicRouter(postsRouter, timeoutMiddleware.RequestMiddleware)
 	postServer.RegisterPrivateRouter(postsRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 

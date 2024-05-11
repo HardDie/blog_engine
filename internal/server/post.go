@@ -8,15 +8,15 @@ import (
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
-	"github.com/HardDie/blog_engine/internal/service"
+	"github.com/HardDie/blog_engine/internal/service/post"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
 type Post struct {
-	service service.IPost
+	service post.IPost
 }
 
-func NewPost(service service.IPost) *Post {
+func NewPost(service post.IPost) *Post {
 	return &Post{
 		service: service,
 	}
