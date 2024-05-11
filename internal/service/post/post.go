@@ -39,6 +39,9 @@ func (p *Post) Feed(ctx context.Context, req *dto.FeedPostDTO) ([]*entity.Post, 
 	if err != nil {
 		return nil, 0, fmt.Errorf("Post.Feed() List: %w", err)
 	}
+	if posts == nil {
+		posts = []*entity.Post{}
+	}
 	return posts, count, nil
 }
 func (p *Post) PublicGet(ctx context.Context, id int32) (*entity.Post, error) {
