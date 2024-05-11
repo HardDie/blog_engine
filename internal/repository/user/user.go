@@ -15,6 +15,7 @@ import (
 
 type IUser interface {
 	GetByID(ctx context.Context, id int32, showPrivateInfo bool) (*entity.User, error)
+	FindByName(ctx context.Context, name string) (*entity.User, error)
 	GetByName(ctx context.Context, name string) (*entity.User, error)
 	Create(ctx context.Context, name, displayedName string, invitedByUserID int32) (*entity.User, error)
 	Update(ctx context.Context, req *dto.UpdateProfileDTO, id int32) (*entity.User, error)
@@ -60,7 +61,7 @@ func (r *User) GetByID(ctx context.Context, id int32, showPrivateInfo bool) (*en
 	return user, nil
 
 }
-func (r *User) GetByName(ctx context.Context, name string) (*entity.User, error) {
+func (r *User) FindByName(ctx context.Context, name string) (*entity.User, error) {
 	user := &entity.User{
 		Username: name,
 	}
@@ -75,11 +76,21 @@ func (r *User) GetByName(ctx context.Context, name string) (*entity.User, error)
 		&user.UpdatedAt, &user.DeletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrorNotFound
+			return nil, nil
 		}
-		return nil, fmt.Errorf("User.GetByName() Scan: %w", err)
+		return nil, fmt.Errorf("User.FindByName() Scan: %w", err)
 	}
 	return user, nil
+}
+func (r *User) GetByName(ctx context.Context, name string) (*entity.User, error) {
+	resp, err := r.FindByName(ctx, name)
+	if err != nil {
+		return nil, fmt.Errorf("User.GetByName() FindByName: %w", err)
+	}
+	if resp == nil {
+		return nil, ErrorNotFound
+	}
+	return resp, nil
 }
 func (r *User) Create(ctx context.Context, name, displayedName string, invitedByUserID int32) (*entity.User, error) {
 	user := &entity.User{

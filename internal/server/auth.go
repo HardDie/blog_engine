@@ -9,16 +9,16 @@ import (
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
-	"github.com/HardDie/blog_engine/internal/service"
+	"github.com/HardDie/blog_engine/internal/service/auth"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
 type Auth struct {
-	service service.IAuth
+	service auth.IAuth
 	cfg     *config.Config
 }
 
-func NewAuth(cfg *config.Config, service service.IAuth) *Auth {
+func NewAuth(cfg *config.Config, service auth.IAuth) *Auth {
 	return &Auth{
 		cfg:     cfg,
 		service: service,

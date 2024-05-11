@@ -5,15 +5,15 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/HardDie/blog_engine/internal/service"
+	"github.com/HardDie/blog_engine/internal/service/auth"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
 type AuthMiddleware struct {
-	authService service.IAuth
+	authService auth.IAuth
 }
 
-func NewAuthMiddleware(authService service.IAuth) *AuthMiddleware {
+func NewAuthMiddleware(authService auth.IAuth) *AuthMiddleware {
 	return &AuthMiddleware{
 		authService: authService,
 	}
@@ -32,7 +32,7 @@ func (m *AuthMiddleware) RequestMiddleware(next http.Handler) http.Handler {
 		ctx := r.Context()
 		session, err := m.authService.ValidateCookie(ctx, cookie.Value)
 		if err != nil || session == nil {
-			if errors.Is(err, service.ErrorSessionHasExpired) {
+			if errors.Is(err, auth.ErrorSessionHasExpired) {
 				http.Error(w, "Session has expired", http.StatusUnauthorized)
 			} else {
 				http.Error(w, "Invalid session", http.StatusUnauthorized)

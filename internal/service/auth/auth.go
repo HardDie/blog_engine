@@ -1,4 +1,4 @@
-package service
+package auth
 
 import (
 	"context"
@@ -11,15 +11,11 @@ import (
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
-	"github.com/HardDie/blog_engine/internal/repository/invite"
+	repositoryInvite "github.com/HardDie/blog_engine/internal/repository/invite"
 	"github.com/HardDie/blog_engine/internal/repository/password"
-	"github.com/HardDie/blog_engine/internal/repository/session"
-	"github.com/HardDie/blog_engine/internal/repository/user"
+	repositorySession "github.com/HardDie/blog_engine/internal/repository/session"
+	repositoryUser "github.com/HardDie/blog_engine/internal/repository/user"
 	"github.com/HardDie/blog_engine/internal/utils"
-)
-
-var (
-	ErrorSessionHasExpired = errors.New("session has expired")
 )
 
 type IAuth interface {
@@ -32,17 +28,22 @@ type IAuth interface {
 }
 
 type Auth struct {
-	userRepository     user.IUser
+	userRepository     repositoryUser.IUser
 	passwordRepository password.IPassword
-	sessionRepository  session.ISession
-	inviteRepository   invite.IInvite
+	sessionRepository  repositorySession.ISession
+	inviteRepository   repositoryInvite.IInvite
 
 	cfg   *config.Config
 	mutex sync.Mutex
 }
 
-func NewAuth(cfg *config.Config, user user.IUser, password password.IPassword,
-	session session.ISession, invite invite.IInvite) *Auth {
+func New(
+	cfg *config.Config,
+	user repositoryUser.IUser,
+	password password.IPassword,
+	session repositorySession.ISession,
+	invite repositoryInvite.IInvite,
+) *Auth {
 	return &Auth{
 		cfg:                cfg,
 		userRepository:     user,
@@ -64,52 +65,53 @@ func (s *Auth) Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User
 	// Check if invite exist
 	invite, err := s.inviteRepository.GetByInviteHash(ctx, hashInvite)
 	if err != nil {
-		return nil, fmt.Errorf("error while trying get invite: %w", err)
-	}
-	if invite == nil {
-		return nil, fmt.Errorf("can't find such invite")
+		switch {
+		case errors.Is(err, repositoryInvite.ErrorNotFound):
+			return nil, ErrorInviteNotFound
+		}
+		return nil, fmt.Errorf("Auth.Register() GetByInviteHash: %w", err)
 	}
 
 	// Check if invite is not expired
 	if time.Now().Sub(invite.UpdatedAt) > time.Hour*24 {
 		err = s.inviteRepository.Delete(ctx, invite.ID)
 		if err != nil {
-			logger.Error.Printf("Can't delete expired invite [%d]: %v", invite.ID, err.Error())
+			logger.Error.Printf("Auth.Register(): Can't delete expired invite [%d]: %v", invite.ID, err.Error())
 		}
-		return nil, fmt.Errorf("invite has expired")
+		return nil, ErrorInviteExpired
 	}
 
 	// Check if username is not busy
-	user, err := s.userRepository.GetByName(ctx, req.Username)
+	user, err := s.userRepository.FindByName(ctx, req.Username)
 	if err != nil {
-		return nil, fmt.Errorf("error while trying get user: %w", err)
+		return nil, fmt.Errorf("Auth.Register() FindByName: %w", err)
 	}
 	if user != nil {
-		return nil, fmt.Errorf("username already exist")
+		return nil, ErrorUserExist
 	}
 
 	// Activating invite
 	invite, err = s.inviteRepository.Activate(ctx, invite.ID)
-	if err != nil || invite == nil {
-		return nil, fmt.Errorf("error while activating invite: %w", err)
+	if err != nil {
+		return nil, fmt.Errorf("Auth.Register() Activate: %w", err)
 	}
 
 	// Hashing password
 	hashPassword, err := utils.HashBcrypt(req.Password)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Auth.Register() HashBcrypt: %w", err)
 	}
 
 	// Create a user
 	user, err = s.userRepository.Create(ctx, req.Username, req.DisplayedName, invite.UserID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Auth.Register() user.Create: %w", err)
 	}
 
 	// Create a password
 	_, err = s.passwordRepository.Create(ctx, user.ID, hashPassword)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Auth.Register() password.Create: %w", err)
 	}
 
 	return user, nil
@@ -118,31 +120,29 @@ func (s *Auth) Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, erro
 	// Check if such user exist
 	user, err := s.userRepository.GetByName(ctx, req.Username)
 	if err != nil {
-		return nil, err
-	}
-	if user == nil {
-		return nil, fmt.Errorf("user not exist")
+		switch {
+		case errors.Is(err, repositoryUser.ErrorNotFound):
+			return nil, ErrorUserNotFound
+		}
+		return nil, fmt.Errorf("Auth.Login() user.GetByName: %w", err)
 	}
 
 	// Get password from DB
 	password, err := s.passwordRepository.GetByUserID(ctx, user.ID)
 	if err != nil {
-		return nil, err
-	}
-	if password == nil {
-		return nil, fmt.Errorf("password for user not exist")
+		return nil, fmt.Errorf("Auth.Login() password.GetByUserID: %w", err)
 	}
 
 	// Check if the password is locked after failed attempts
 	if password.FailedAttempts >= int32(s.cfg.PwdMaxAttempts) {
 		// Check if the password block time has expired
 		if time.Now().Sub(password.UpdatedAt) <= time.Hour*time.Duration(s.cfg.PwdBlockTime) {
-			return nil, fmt.Errorf("user was blocked after failed attempts")
+			return nil, ErrorUserBlocked
 		}
 		// If the blocking time has expired, reset the counter of failed attempts
 		password, err = s.passwordRepository.ResetFailedAttempts(ctx, password.ID)
 		if err != nil {
-			return nil, fmt.Errorf("error resetting the counter of failed attempts: %w", err)
+			return nil, fmt.Errorf("Auth.Login() ResetFailedAttempts: %w", err)
 		}
 	}
 
@@ -151,34 +151,38 @@ func (s *Auth) Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, erro
 		// Increased number of failed attempts
 		_, err = s.passwordRepository.IncreaseFailedAttempts(ctx, password.ID)
 		if err != nil {
-			logger.Error.Println("Error increasing failed attempts:", err.Error())
+			logger.Error.Println("Auth.Login() IncreaseFailedAttempts:", err.Error())
 		}
-		return nil, fmt.Errorf("invalid password")
+		return nil, ErrorInvalidPassword
 	}
 
 	// Reset the failed attempts counter after the first successful attempt
 	if password.FailedAttempts > 0 {
 		_, err = s.passwordRepository.ResetFailedAttempts(ctx, password.ID)
 		if err != nil {
-			logger.Error.Println("Error flushing failed attempts:", err.Error())
+			logger.Error.Println("Auth.Login() ResetFailedAttempts:", err.Error())
 		}
 	}
 	return user, nil
 }
 func (s *Auth) Logout(ctx context.Context, sessionID int32) error {
-	return s.sessionRepository.DeleteByID(ctx, sessionID)
+	err := s.sessionRepository.DeleteByID(ctx, sessionID)
+	if err != nil {
+		return fmt.Errorf("Auth.Logout() DeleteByID: %w", err)
+	}
+	return nil
 }
 func (s *Auth) GenerateCookie(ctx context.Context, userID int32) (string, error) {
 	// Generate session key
 	sessionKey, err := utils.GenerateSessionKey()
 	if err != nil {
-		return "", fmt.Errorf("generate session key: %w", err)
+		return "", fmt.Errorf("Auth.GenerateCookie() GenerateSessionKey: %w", err)
 	}
 
 	// Write session to DB
 	_, err = s.sessionRepository.CreateOrUpdate(ctx, userID, utils.HashSha256(sessionKey))
 	if err != nil {
-		return "", fmt.Errorf("write session to DB: %w", err)
+		return "", fmt.Errorf("Auth.GenerateCookie() CreateOrUpdate: %w", err)
 	}
 
 	return sessionKey, nil
@@ -188,7 +192,11 @@ func (s *Auth) ValidateCookie(ctx context.Context, sessionToken string) (*entity
 	sessionHash := utils.HashSha256(sessionToken)
 	session, err := s.sessionRepository.GetByUserID(ctx, sessionHash)
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, repositorySession.ErrorNotFound):
+			return nil, ErrorSessionNotFound
+		}
+		return nil, fmt.Errorf("Auth.ValidateCookie() GetyByUserID: %w", err)
 	}
 
 	// Check if session is not expired
@@ -198,5 +206,24 @@ func (s *Auth) ValidateCookie(ctx context.Context, sessionToken string) (*entity
 	return session, nil
 }
 func (s *Auth) GetUserInfo(ctx context.Context, userID int32) (*entity.User, error) {
-	return s.userRepository.GetByID(ctx, userID, true)
+	user, err := s.userRepository.GetByID(ctx, userID, true)
+	if err != nil {
+		switch {
+		case errors.Is(err, repositoryUser.ErrorNotFound):
+			return nil, ErrorUserNotFound
+		}
+		return nil, fmt.Errorf("Auth.GetUserInfo() GetByID: %w", err)
+	}
+	return user, nil
 }
+
+var (
+	ErrorInviteNotFound    = errors.New("invite not found")
+	ErrorInviteExpired     = errors.New("invite has expired")
+	ErrorUserExist         = errors.New("user exist")
+	ErrorUserNotFound      = errors.New("user not found")
+	ErrorUserBlocked       = errors.New("user blocked")
+	ErrorInvalidPassword   = errors.New("invalid password")
+	ErrorSessionNotFound   = errors.New("session not found")
+	ErrorSessionHasExpired = errors.New("session has expired")
+)

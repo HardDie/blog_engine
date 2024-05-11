@@ -17,6 +17,7 @@ import (
 	"github.com/HardDie/blog_engine/internal/repository/user"
 	"github.com/HardDie/blog_engine/internal/server"
 	"github.com/HardDie/blog_engine/internal/service"
+	"github.com/HardDie/blog_engine/internal/service/auth"
 )
 
 type Application struct {
@@ -56,7 +57,7 @@ func Get() (*Application, error) {
 	postRepository := post.New(app.DB)
 
 	// Init services
-	authService := service.NewAuth(app.Cfg, userRepository, passwordRepository, sessionRepository, inviteRepository)
+	authService := auth.New(app.Cfg, userRepository, passwordRepository, sessionRepository, inviteRepository)
 
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
