@@ -143,7 +143,7 @@ func (s *Post) PublicGet(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, servicePost.ErrorPostNotFound):
-			err = utils.WriteJSONHTTPResponse(w, http.StatusNotFound, JSONResponse{
+			utils.WriteJSONHTTPResponse(w, http.StatusNotFound, JSONResponse{
 				Error: "Post not found",
 			})
 			return

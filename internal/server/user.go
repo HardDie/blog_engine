@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -8,17 +9,17 @@ import (
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
-	"github.com/HardDie/blog_engine/internal/service/user"
+	serviceUser "github.com/HardDie/blog_engine/internal/service/user"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
 type User struct {
-	service user.IUser
+	user serviceUser.IUser
 }
 
-func NewUser(service user.IUser) *User {
+func NewUser(user serviceUser.IUser) *User {
 	return &User{
-		service: service,
+		user: user,
 	}
 }
 func (s *User) RegisterPublicRouter(router *mux.Router, middleware ...mux.MiddlewareFunc) {
@@ -62,8 +63,10 @@ func (s *User) Get(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := utils.GetInt32FromPath(r, "id")
 	if err != nil {
-		logger.Error.Printf(err.Error())
-		http.Error(w, "Bad id in path", http.StatusBadRequest)
+		logger.Error.Printf("User.Get() GetInt32FromPath: %s", err.Error())
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Bad id in path",
+		})
 		return
 	}
 	req := dto.GetUserDTO{
@@ -72,20 +75,32 @@ func (s *User) Get(w http.ResponseWriter, r *http.Request) {
 
 	err = GetValidator().Struct(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Validation",
+			Data:  err.Error(),
+		})
 		return
 	}
 
-	user, err := s.service.Get(ctx, userID)
+	user, err := s.user.Get(ctx, userID)
 	if err != nil {
-		logger.Error.Println("Can't get post:", err.Error())
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, serviceUser.ErrorUserNotFound):
+			utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+				Error: "User not found",
+			})
+			return
+		}
+		logger.Error.Printf("User.Get() Get: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	err = utils.Response(w, user)
+	err = utils.WriteJSONHTTPResponse(w, http.StatusOK, JSONResponse{
+		Data: user,
+	})
 	if err != nil {
-		logger.Error.Println(err.Error())
+		logger.Error.Printf("User.Get() WriteJSONHTTPResponse: %s", err.Error())
 	}
 }
 
@@ -118,21 +133,31 @@ func (s *User) Password(w http.ResponseWriter, r *http.Request) {
 	req := &dto.UpdatePasswordDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
 	if err != nil {
-		logger.Error.Printf(err.Error())
-		http.Error(w, "Can't parse request", http.StatusBadRequest)
+		logger.Error.Printf("User.Password() ParseJsonFromHTTPRequest: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
 	err = GetValidator().Struct(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Validation",
+			Data:  err.Error(),
+		})
 		return
 	}
 
-	err = s.service.Password(ctx, req, userID)
+	err = s.user.Password(ctx, req, userID)
 	if err != nil {
-		logger.Error.Println("Can't update password:", err.Error())
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, serviceUser.ErrorInvalidPassword):
+			utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+				Error: "Invalid old password",
+			})
+			return
+		}
+		logger.Error.Printf("User.Password() Password: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 }
@@ -162,26 +187,31 @@ func (s *User) Profile(w http.ResponseWriter, r *http.Request) {
 	req := &dto.UpdateProfileDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
 	if err != nil {
-		logger.Error.Printf(err.Error())
-		http.Error(w, "Can't parse request", http.StatusBadRequest)
+		logger.Error.Printf("User.Profile() ParseJsonFromHTTPRequest: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
 	err = GetValidator().Struct(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Validation",
+			Data:  err.Error(),
+		})
 		return
 	}
 
-	user, err := s.service.Profile(ctx, req, userID)
+	user, err := s.user.Profile(ctx, req, userID)
 	if err != nil {
-		logger.Error.Println("Can't update user profile:", err.Error())
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		logger.Error.Printf("User.Profile() Profile: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	err = utils.Response(w, user)
+	err = utils.WriteJSONHTTPResponse(w, http.StatusOK, JSONResponse{
+		Data: user,
+	})
 	if err != nil {
-		logger.Error.Println(err.Error())
+		logger.Error.Printf("User.Profile() WriteJSONHTTPResponse: %s", err.Error())
 	}
 }

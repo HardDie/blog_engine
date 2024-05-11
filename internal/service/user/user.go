@@ -42,7 +42,6 @@ func (s *User) Get(ctx context.Context, id int32) (*entity.User, error) {
 	}
 	return resp, nil
 }
-
 func (s *User) Password(ctx context.Context, req *dto.UpdatePasswordDTO, userID int32) error {
 	// Get password from DB
 	password, err := s.passwordRepository.GetByUserID(ctx, userID)
