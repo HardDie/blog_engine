@@ -1,9 +1,10 @@
-package repository
+package user
 
 import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/dimonrus/gosql"
 
@@ -23,7 +24,7 @@ type User struct {
 	db *db.DB
 }
 
-func NewUser(db *db.DB) *User {
+func New(db *db.DB) *User {
 	return &User{
 		db: db,
 	}
@@ -52,9 +53,9 @@ func (r *User) GetByID(ctx context.Context, id int32, showPrivateInfo bool) (*en
 	}
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return nil, ErrorNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("User.GetByID() Scan: %w", err)
 	}
 	return user, nil
 
@@ -74,9 +75,9 @@ func (r *User) GetByName(ctx context.Context, name string) (*entity.User, error)
 		&user.UpdatedAt, &user.DeletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return nil, ErrorNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("User.GetByName() Scan: %w", err)
 	}
 	return user, nil
 }
@@ -95,7 +96,7 @@ func (r *User) Create(ctx context.Context, name, displayedName string, invitedBy
 
 	err := row.Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User.Create() Scan: %w", err)
 	}
 	return user, nil
 }
@@ -117,7 +118,11 @@ func (r *User) Update(ctx context.Context, req *dto.UpdateProfileDTO, id int32) 
 
 	err := row.Scan(&user.Username, &user.InvitedByUserID, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User.Update() Scan: %w", err)
 	}
 	return user, nil
 }
+
+var (
+	ErrorNotFound = errors.New("user not found")
+)

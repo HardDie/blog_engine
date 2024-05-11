@@ -10,11 +10,11 @@ import (
 	"github.com/HardDie/blog_engine/internal/db"
 	"github.com/HardDie/blog_engine/internal/middleware"
 	"github.com/HardDie/blog_engine/internal/migration"
-	"github.com/HardDie/blog_engine/internal/repository"
 	"github.com/HardDie/blog_engine/internal/repository/invite"
 	"github.com/HardDie/blog_engine/internal/repository/password"
 	"github.com/HardDie/blog_engine/internal/repository/post"
 	"github.com/HardDie/blog_engine/internal/repository/session"
+	"github.com/HardDie/blog_engine/internal/repository/user"
 	"github.com/HardDie/blog_engine/internal/server"
 	"github.com/HardDie/blog_engine/internal/service"
 )
@@ -49,7 +49,7 @@ func Get() (*Application, error) {
 	v1Router := apiRouter.PathPrefix("/v1").Subrouter()
 
 	// Init repositories
-	userRepository := repository.NewUser(app.DB)
+	userRepository := user.New(app.DB)
 	passwordRepository := password.New(app.DB)
 	sessionRepository := session.New(app.DB)
 	inviteRepository := invite.New(app.DB)
