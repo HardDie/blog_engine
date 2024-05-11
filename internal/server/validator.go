@@ -16,5 +16,5 @@ func GetValidator() *validator.Validate {
 type JSONResponse struct {
 	Message any `json:"message,omitempty"`
 	Data    any `json:"data,omitempty"`
-	Error   any `json:"error"`
+	Error   any `json:"error,omitempty"`
 }

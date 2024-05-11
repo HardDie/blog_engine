@@ -1,23 +1,23 @@
 package server
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
 	"github.com/HardDie/blog_engine/internal/logger"
-	"github.com/HardDie/blog_engine/internal/service/invite"
+	serviceInvite "github.com/HardDie/blog_engine/internal/service/invite"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
 type Invite struct {
-	service invite.IInvite
+	inviteService serviceInvite.IInvite
 }
 
-func NewInvite(service invite.IInvite) *Invite {
+func NewInvite(invite serviceInvite.IInvite) *Invite {
 	return &Invite{
-		service: service,
+		inviteService: invite,
 	}
 }
 func (s *Invite) RegisterPrivateRouter(router *mux.Router, middleware ...mux.MiddlewareFunc) {
@@ -49,15 +49,18 @@ func (s *Invite) Generate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromContext(ctx)
 
-	inviteCode, err := s.service.Generate(ctx, userID)
+	inviteCode, err := s.inviteService.Generate(ctx, userID)
 	if err != nil {
-		logger.Error.Println("Error generating invite code:", err.Error())
-		http.Error(w, "Can't generate invite code", http.StatusInternalServerError)
+		logger.Error.Printf("Invite() Generate: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	_, err = fmt.Fprintf(w, inviteCode)
+
+	err = utils.WriteJSONHTTPResponse(w, http.StatusOK, JSONResponse{
+		Data: inviteCode,
+	})
 	if err != nil {
-		logger.Error.Println("Error sending response:", err.Error())
+		logger.Error.Printf("Invite() WriteJSONHTTPResponse: %s", err.Error())
 	}
 }
 
@@ -79,10 +82,17 @@ func (s *Invite) Revoke(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromContext(ctx)
 
-	err := s.service.Revoke(ctx, userID)
+	err := s.inviteService.Revoke(ctx, userID)
 	if err != nil {
-		logger.Error.Println("Error revoking invite code:", err.Error())
-		http.Error(w, "Can't revoke invite code", http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, serviceInvite.ErrorInviteNotFound):
+			utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+				Error: "Invite not found",
+			})
+			return
+		}
+		logger.Error.Printf("Revoke() Revoke: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 }
