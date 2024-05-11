@@ -33,6 +33,8 @@ func Get() (*Application, error) {
 		Cfg:    config.Get(),
 		Router: mux.NewRouter(),
 	}
+	app.Router.Use(middleware.CorsMiddleware)
+	app.Router.MethodNotAllowedHandler = http.HandlerFunc(notAllowed)
 
 	// Init DB
 	newDB, err := db.Get(app.Cfg.DBPath)
@@ -72,25 +74,34 @@ func Get() (*Application, error) {
 	authRouter := v1Router.PathPrefix("/auth").Subrouter()
 	authServer := server.NewAuth(app.Cfg, authService)
 	authServer.RegisterPublicRouter(authRouter)
-	authServer.RegisterPrivateRouter(authRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
+	authServer.RegisterPrivateRouter(authRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	inviteRouter := v1Router.PathPrefix("/invites").Subrouter()
 	inviteServer := server.NewInvite(inviteService)
-	inviteServer.RegisterPrivateRouter(inviteRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
+	inviteServer.RegisterPrivateRouter(inviteRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	postsRouter := v1Router.PathPrefix("/posts").Subrouter()
 	postServer := server.NewPost(postService)
-	postServer.RegisterPublicRouter(postsRouter, timeoutMiddleware.RequestMiddleware)
-	postServer.RegisterPrivateRouter(postsRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
+	postServer.RegisterPublicRouter(postsRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware)
+	postServer.RegisterPrivateRouter(postsRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	userRouter := v1Router.PathPrefix("/user").Subrouter()
 	userServer := server.NewUser(userService)
-	userServer.RegisterPublicRouter(userRouter, timeoutMiddleware.RequestMiddleware)
-	userServer.RegisterPrivateRouter(userRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
+	userServer.RegisterPublicRouter(userRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware)
+	userServer.RegisterPrivateRouter(userRouter, middleware.CorsMiddleware, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	return app, nil
 }
 
 func (app *Application) Run() error {
 	return http.ListenAndServe(app.Cfg.Port, app.Router)
+}
+
+func notAllowed(w http.ResponseWriter, r *http.Request) {
+	if (*r).Method == http.MethodOptions {
+		middleware.SetupCors(w, r)
+		return
+	}
+	w.WriteHeader(http.StatusMethodNotAllowed)
+	return
 }
