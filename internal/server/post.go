@@ -80,7 +80,7 @@ func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 
 	posts, total, err := s.postService.Feed(ctx, req)
 	if err != nil {
-		logger.Error.Printf("Feed() Feed: %s", err.Error())
+		logger.Error.Printf("Post.Feed() Feed: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -92,7 +92,7 @@ func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 	}
 	err = utils.ResponseWithMeta(w, posts, meta)
 	if err != nil {
-		logger.Error.Printf("Feed() ResponseWithMeta: %s", err.Error())
+		logger.Error.Printf("Post.Feed() ResponseWithMeta: %s", err.Error())
 	}
 }
 
@@ -120,7 +120,7 @@ func (s *Post) PublicGet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	postID, err := utils.GetInt32FromPath(r, "id")
 	if err != nil {
-		logger.Error.Printf("PublicGet() GetInt32FromPath: %s", err.Error())
+		logger.Error.Printf("Post.PublicGet() GetInt32FromPath: %s", err.Error())
 		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
 			Error: "Bad id in path",
 		})
@@ -148,7 +148,7 @@ func (s *Post) PublicGet(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		logger.Error.Printf("PublicGet() PublicGet: %s", err.Error())
+		logger.Error.Printf("Post.PublicGet() PublicGet: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -157,7 +157,7 @@ func (s *Post) PublicGet(w http.ResponseWriter, r *http.Request) {
 		Data: post,
 	})
 	if err != nil {
-		logger.Error.Printf("PublicGet() WriteJSONHTTPResponse: %s", err.Error())
+		logger.Error.Printf("Post.PublicGet() WriteJSONHTTPResponse: %s", err.Error())
 	}
 }
 
@@ -194,7 +194,7 @@ func (s *Post) Create(w http.ResponseWriter, r *http.Request) {
 	req := &dto.CreatePostDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
 	if err != nil {
-		logger.Error.Printf("Create() ParseJsonFromHTTPRequest: %s", err.Error())
+		logger.Error.Printf("Post.Create() ParseJsonFromHTTPRequest: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -210,7 +210,7 @@ func (s *Post) Create(w http.ResponseWriter, r *http.Request) {
 
 	post, err := s.postService.Create(ctx, req, userID)
 	if err != nil {
-		logger.Error.Printf("Create() Create: %s", err.Error())
+		logger.Error.Printf("Post.Create() Create: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -219,7 +219,7 @@ func (s *Post) Create(w http.ResponseWriter, r *http.Request) {
 		Data: post,
 	})
 	if err != nil {
-		logger.Error.Printf("Create() WriteJSONHTTPResponse: %s", err.Error())
+		logger.Error.Printf("Post.Create() WriteJSONHTTPResponse: %s", err.Error())
 	}
 }
 
@@ -254,14 +254,14 @@ func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
 	req := &dto.EditPostDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
 	if err != nil {
-		logger.Error.Printf("Edit() ParseJsonFromHTTPRequest: %s", err.Error())
+		logger.Error.Printf("Post.Edit() ParseJsonFromHTTPRequest: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
 	req.ID, err = utils.GetInt32FromPath(r, "id")
 	if err != nil {
-		logger.Error.Printf("Edit() GetInt32FromPath: %s", err.Error())
+		logger.Error.Printf("Post.Edit() GetInt32FromPath: %s", err.Error())
 		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
 			Error: "Bad id in path",
 		})
@@ -279,7 +279,7 @@ func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
 
 	post, err := s.postService.Edit(ctx, req, userID)
 	if err != nil {
-		logger.Error.Printf("Edit() Edit: %s", err.Error())
+		logger.Error.Printf("Post.Edit() Edit: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -288,7 +288,7 @@ func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
 		Data: post,
 	})
 	if err != nil {
-		logger.Error.Printf("Edit() WriteJSONHTTPResponse: %s", err.Error())
+		logger.Error.Printf("Post.Edit() WriteJSONHTTPResponse: %s", err.Error())
 	}
 }
 
@@ -333,7 +333,7 @@ func (s *Post) List(w http.ResponseWriter, r *http.Request) {
 
 	posts, total, err := s.postService.List(ctx, req, userID)
 	if err != nil {
-		logger.Error.Printf("List() List: %s", err.Error())
+		logger.Error.Printf("Post.List() List: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
@@ -344,6 +344,6 @@ func (s *Post) List(w http.ResponseWriter, r *http.Request) {
 	}
 	err = utils.ResponseWithMeta(w, posts, meta)
 	if err != nil {
-		logger.Error.Printf("List() ResponseWithMeta: %s", err.Error())
+		logger.Error.Printf("Post.List() ResponseWithMeta: %s", err.Error())
 	}
 }

@@ -55,7 +55,7 @@ func (s *Invite) Generate(w http.ResponseWriter, r *http.Request) {
 
 	inviteCode, err := s.inviteService.Generate(ctx, userID)
 	if err != nil {
-		logger.Error.Printf("Invite() Generate: %s", err.Error())
+		logger.Error.Printf("Invite.Invite() Generate: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -64,7 +64,7 @@ func (s *Invite) Generate(w http.ResponseWriter, r *http.Request) {
 		Data: inviteCode,
 	})
 	if err != nil {
-		logger.Error.Printf("Invite() WriteJSONHTTPResponse: %s", err.Error())
+		logger.Error.Printf("Invite.Invite() WriteJSONHTTPResponse: %s", err.Error())
 	}
 }
 
@@ -95,7 +95,7 @@ func (s *Invite) Revoke(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		logger.Error.Printf("Revoke() Revoke: %s", err.Error())
+		logger.Error.Printf("Invite.Revoke() Revoke: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

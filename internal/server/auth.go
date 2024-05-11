@@ -65,8 +65,8 @@ func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
 	req := &dto.RegisterDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
 	if err != nil {
-		logger.Error.Printf(err.Error())
-		http.Error(w, "Can't parse request", http.StatusBadRequest)
+		logger.Error.Printf("Auth.Register() ParseJsonFromHTTPRequest: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
@@ -98,14 +98,14 @@ func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		logger.Error.Printf("Register() Register: %s", err.Error())
+		logger.Error.Printf("Auth.Register() Register: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	session, err := s.authService.GenerateCookie(ctx, user.ID)
 	if err != nil {
-		logger.Error.Printf("Register() GenerateCookie: %s", err.Error())
+		logger.Error.Printf("Auth.Register() GenerateCookie: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -137,8 +137,8 @@ func (s *Auth) Login(w http.ResponseWriter, r *http.Request) {
 	req := &dto.LoginDTO{}
 	err := utils.ParseJsonFromHTTPRequest(r.Body, req)
 	if err != nil {
-		logger.Error.Printf(err.Error())
-		http.Error(w, "Can't parse request", http.StatusBadRequest)
+		logger.Error.Printf("Auth.Login() ParseJsonFromHTTPRequest: %s", err.Error())
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
@@ -170,14 +170,14 @@ func (s *Auth) Login(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		logger.Error.Printf("Login() Login: %s", err.Error())
+		logger.Error.Printf("Auth.Login() Login: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	session, err := s.authService.GenerateCookie(ctx, user.ID)
 	if err != nil {
-		logger.Error.Printf("Login() GenerateCookie: %s", err.Error())
+		logger.Error.Printf("Auth.Login() GenerateCookie: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -220,14 +220,16 @@ func (s *Auth) User(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		logger.Error.Printf("User() GetUserInfo: %s", err.Error())
+		logger.Error.Printf("Auth.User() GetUserInfo: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	err = utils.Response(w, user)
+	err = utils.WriteJSONHTTPResponse(w, http.StatusOK, JSONResponse{
+		Data: user,
+	})
 	if err != nil {
-		logger.Error.Println(err.Error())
+		logger.Error.Printf("Auth.User() WriteJSONHTTPResponse: %s", err.Error())
 	}
 }
 
@@ -251,7 +253,7 @@ func (s *Auth) Logout(w http.ResponseWriter, r *http.Request) {
 
 	err := s.authService.Logout(ctx, session.ID)
 	if err != nil {
-		logger.Error.Printf("Logout() Logout: %s", err.Error())
+		logger.Error.Printf("Auth.Logout() Logout: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
