@@ -1,7 +1,10 @@
-package repository
+package session
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/dimonrus/gosql"
 
@@ -19,7 +22,7 @@ type Session struct {
 	db *db.DB
 }
 
-func NewSession(db *db.DB) *Session {
+func New(db *db.DB) *Session {
 	return &Session{
 		db: db,
 	}
@@ -40,7 +43,7 @@ RETURNING id, created_at, updated_at`, userID, sessionHash)
 
 	err := row.Scan(&session.ID, &session.CreatedAt, &session.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Session.CreateOrUpdate() Scan: %w", err)
 	}
 	return session, nil
 }
@@ -57,7 +60,10 @@ func (r *Session) GetByUserID(ctx context.Context, sessionHash string) (*entity.
 
 	err := row.Scan(&session.ID, &session.UserID, &session.CreatedAt, &session.UpdatedAt)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrorNotFound
+		}
+		return nil, fmt.Errorf("Session.GetByUserID() Scan: %w", err)
 	}
 	return session, nil
 }
@@ -71,7 +77,11 @@ func (r *Session) DeleteByID(ctx context.Context, id int32) error {
 
 	err := row.Scan(&id)
 	if err != nil {
-		return err
+		return fmt.Errorf("Session.DeleteByID() Scan: %w", err)
 	}
 	return nil
 }
+
+var (
+	ErrorNotFound = errors.New("session not found")
+)

@@ -14,6 +14,7 @@ import (
 	"github.com/HardDie/blog_engine/internal/repository/invite"
 	"github.com/HardDie/blog_engine/internal/repository/password"
 	"github.com/HardDie/blog_engine/internal/repository/post"
+	"github.com/HardDie/blog_engine/internal/repository/session"
 	"github.com/HardDie/blog_engine/internal/server"
 	"github.com/HardDie/blog_engine/internal/service"
 )
@@ -50,7 +51,7 @@ func Get() (*Application, error) {
 	// Init repositories
 	userRepository := repository.NewUser(app.DB)
 	passwordRepository := password.New(app.DB)
-	sessionRepository := repository.NewSession(app.DB)
+	sessionRepository := session.New(app.DB)
 	inviteRepository := invite.New(app.DB)
 	postRepository := post.New(app.DB)
 
