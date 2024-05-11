@@ -34,7 +34,13 @@ func Get() (*Application, error) {
 		Cfg:    config.Get(),
 		Router: mux.NewRouter(),
 	}
-	app.Router.Use(chiMiddleware.Logger, middleware.CorsMiddleware)
+	app.Router.Use(
+		chiMiddleware.RequestID,
+		chiMiddleware.RealIP,
+		chiMiddleware.Logger,
+		chiMiddleware.Recoverer,
+		middleware.CorsMiddleware,
+	)
 	app.Router.MethodNotAllowedHandler = http.HandlerFunc(notAllowed)
 
 	// Init DB
