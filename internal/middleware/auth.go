@@ -24,7 +24,7 @@ func (m *AuthMiddleware) RequestMiddleware(next http.Handler) http.Handler {
 
 		// If we got no cookie
 		if cookie == nil || cookie.Value == "" {
-			http.Error(w, "Invalid session", http.StatusBadRequest)
+			http.Error(w, "Invalid session", http.StatusUnauthorized)
 			return
 		}
 
