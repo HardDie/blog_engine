@@ -8,15 +8,15 @@ import (
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
-	"github.com/HardDie/blog_engine/internal/service"
+	"github.com/HardDie/blog_engine/internal/service/user"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
 type User struct {
-	service service.IUser
+	service user.IUser
 }
 
-func NewUser(service service.IUser) *User {
+func NewUser(service user.IUser) *User {
 	return &User{
 		service: service,
 	}

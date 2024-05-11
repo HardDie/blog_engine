@@ -16,10 +16,10 @@ import (
 	repositorySession "github.com/HardDie/blog_engine/internal/repository/session"
 	repositoryUser "github.com/HardDie/blog_engine/internal/repository/user"
 	"github.com/HardDie/blog_engine/internal/server"
-	"github.com/HardDie/blog_engine/internal/service"
 	serviceAuth "github.com/HardDie/blog_engine/internal/service/auth"
 	serviceInvite "github.com/HardDie/blog_engine/internal/service/invite"
 	servicePost "github.com/HardDie/blog_engine/internal/service/post"
+	serviceUser "github.com/HardDie/blog_engine/internal/service/user"
 )
 
 type Application struct {
@@ -62,6 +62,7 @@ func Get() (*Application, error) {
 	authService := serviceAuth.New(app.Cfg, userRepository, passwordRepository, sessionRepository, inviteRepository)
 	inviteService := serviceInvite.New(userRepository, inviteRepository)
 	postService := servicePost.New(postRepository)
+	userService := serviceUser.New(userRepository, passwordRepository)
 
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
@@ -83,9 +84,7 @@ func Get() (*Application, error) {
 	postServer.RegisterPrivateRouter(postsRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	userRouter := v1Router.PathPrefix("/user").Subrouter()
-	userServer := server.NewUser(
-		service.NewUser(userRepository, passwordRepository),
-	)
+	userServer := server.NewUser(userService)
 	userServer.RegisterPublicRouter(userRouter, timeoutMiddleware.RequestMiddleware)
 	userServer.RegisterPrivateRouter(userRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
