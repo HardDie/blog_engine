@@ -1,7 +1,10 @@
-package repository
+package post
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/dimonrus/gosql"
@@ -23,7 +26,7 @@ type Post struct {
 	db *db.DB
 }
 
-func NewPost(db *db.DB) *Post {
+func New(db *db.DB) *Post {
 	return &Post{
 		db: db,
 	}
@@ -51,7 +54,7 @@ func (r *Post) List(ctx context.Context, filter *dto.ListPostFilter) ([]*entity.
 	q.AddOrder("id DESC")
 	rows, err := r.db.DB.QueryContext(ctx, q.String(), q.GetArguments()...)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("Post.List() QueryContext: %w", err)
 	}
 	defer rows.Close()
 
@@ -61,7 +64,7 @@ func (r *Post) List(ctx context.Context, filter *dto.ListPostFilter) ([]*entity.
 
 		err = rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Short, &tags, &post.CreatedAt, &post.UpdatedAt, &total)
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, fmt.Errorf("Post.List() Scan: %w", err)
 		}
 		post.Tags = strings.Split(tags, ";")
 		res = append(res, post)
@@ -69,7 +72,7 @@ func (r *Post) List(ctx context.Context, filter *dto.ListPostFilter) ([]*entity.
 
 	err = rows.Err()
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("Post.List() Err: %w", err)
 	}
 
 	return res, total, nil
@@ -93,7 +96,7 @@ func (r *Post) Create(ctx context.Context, req *dto.CreatePostDTO, userID int32)
 
 	err := row.Scan(&post.ID, &post.CreatedAt, &post.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Post.Create() Scan: %w", err)
 	}
 	return post, nil
 }
@@ -124,7 +127,7 @@ func (r *Post) Edit(ctx context.Context, req *dto.EditPostDTO, userID int32) (*e
 
 	err := row.Scan(&post.CreatedAt, &post.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Post.Edit() Scan: %w", err)
 	}
 	return post, nil
 }
@@ -150,8 +153,15 @@ func (r *Post) GetByID(ctx context.Context, id int32, userID *int32) (*entity.Po
 	err := row.Scan(&post.UserID, &post.Title, &post.Short, &post.Body, &tags, &post.IsPublished, &post.CreatedAt,
 		&post.UpdatedAt)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrorNotFound
+		}
+		return nil, fmt.Errorf("Post.GetByID() Scan: %w", err)
 	}
 	post.Tags = strings.Split(tags, ";")
 	return post, nil
 }
+
+var (
+	ErrorNotFound = errors.New("post not found")
+)

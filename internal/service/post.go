@@ -5,7 +5,7 @@ import (
 
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
-	"github.com/HardDie/blog_engine/internal/repository"
+	"github.com/HardDie/blog_engine/internal/repository/post"
 )
 
 type IPost interface {
@@ -18,10 +18,10 @@ type IPost interface {
 }
 
 type Post struct {
-	repository repository.IPost
+	repository post.IPost
 }
 
-func NewPost(repository repository.IPost) *Post {
+func NewPost(repository post.IPost) *Post {
 	return &Post{
 		repository: repository,
 	}
