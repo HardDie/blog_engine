@@ -12,3 +12,9 @@ func GetValidator() *validator.Validate {
 	}
 	return v
 }
+
+type JSONResponse struct {
+	Message any `json:"message,omitempty"`
+	Data    any `json:"data,omitempty"`
+	Error   any `json:"error"`
+}

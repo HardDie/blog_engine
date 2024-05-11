@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -9,19 +10,19 @@ import (
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
-	"github.com/HardDie/blog_engine/internal/service/auth"
+	serviceAuth "github.com/HardDie/blog_engine/internal/service/auth"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
 type Auth struct {
-	service auth.IAuth
-	cfg     *config.Config
+	authService serviceAuth.IAuth
+	cfg         *config.Config
 }
 
-func NewAuth(cfg *config.Config, service auth.IAuth) *Auth {
+func NewAuth(cfg *config.Config, auth serviceAuth.IAuth) *Auth {
 	return &Auth{
-		cfg:     cfg,
-		service: service,
+		cfg:         cfg,
+		authService: auth,
 	}
 }
 func (s *Auth) RegisterPublicRouter(router *mux.Router) {
@@ -71,20 +72,40 @@ func (s *Auth) Register(w http.ResponseWriter, r *http.Request) {
 
 	err = GetValidator().Struct(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Validation",
+			Data:  err.Error(),
+		})
 		return
 	}
 
-	user, err := s.service.Register(ctx, req)
+	user, err := s.authService.Register(ctx, req)
 	if err != nil {
-		logger.Error.Printf(err.Error())
+		switch {
+		case errors.Is(err, serviceAuth.ErrorInviteNotFound):
+			utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+				Error: "Invite not found",
+			})
+			return
+		case errors.Is(err, serviceAuth.ErrorInviteExpired):
+			utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+				Error: "Invite expired",
+			})
+			return
+		case errors.Is(err, serviceAuth.ErrorUserExist):
+			utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+				Error: "User already exist",
+			})
+			return
+		}
+		logger.Error.Printf("Register() Register: %s", err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
-	session, err := s.service.GenerateCookie(ctx, user.ID)
+	session, err := s.authService.GenerateCookie(ctx, user.ID)
 	if err != nil {
-		logger.Error.Printf(err.Error())
+		logger.Error.Printf("Register() GenerateCookie: %s", err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
@@ -123,18 +144,38 @@ func (s *Auth) Login(w http.ResponseWriter, r *http.Request) {
 
 	err = GetValidator().Struct(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+			Error: "Validation",
+			Data:  err.Error(),
+		})
 		return
 	}
 
-	user, err := s.service.Login(ctx, req)
+	user, err := s.authService.Login(ctx, req)
 	if err != nil {
+		switch {
+		case errors.Is(err, serviceAuth.ErrorUserNotFound):
+			utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+				Error: "User not found",
+			})
+			return
+		case errors.Is(err, serviceAuth.ErrorUserBlocked):
+			utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+				Error: "User blocked",
+			})
+			return
+		case errors.Is(err, serviceAuth.ErrorInvalidPassword):
+			utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+				Error: "Invalid password",
+			})
+			return
+		}
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
-	session, err := s.service.GenerateCookie(ctx, user.ID)
+	session, err := s.authService.GenerateCookie(ctx, user.ID)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -170,8 +211,15 @@ func (s *Auth) User(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromContext(ctx)
 
-	user, err := s.service.GetUserInfo(ctx, userID)
+	user, err := s.authService.GetUserInfo(ctx, userID)
 	if err != nil {
+		switch {
+		case errors.Is(err, serviceAuth.ErrorUserNotFound):
+			utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
+				Error: "User not found",
+			})
+			return
+		}
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
@@ -201,7 +249,7 @@ func (s *Auth) Logout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	session := utils.GetSessionFromContext(ctx)
 
-	err := s.service.Logout(ctx, session.ID)
+	err := s.authService.Logout(ctx, session.ID)
 	if err != nil {
 		logger.Error.Printf(err.Error())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
