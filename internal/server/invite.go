@@ -7,15 +7,15 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/HardDie/blog_engine/internal/logger"
-	"github.com/HardDie/blog_engine/internal/service"
+	"github.com/HardDie/blog_engine/internal/service/invite"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
 type Invite struct {
-	service service.IInvite
+	service invite.IInvite
 }
 
-func NewInvite(service service.IInvite) *Invite {
+func NewInvite(service invite.IInvite) *Invite {
 	return &Invite{
 		service: service,
 	}

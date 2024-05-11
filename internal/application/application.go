@@ -10,14 +10,15 @@ import (
 	"github.com/HardDie/blog_engine/internal/db"
 	"github.com/HardDie/blog_engine/internal/middleware"
 	"github.com/HardDie/blog_engine/internal/migration"
-	"github.com/HardDie/blog_engine/internal/repository/invite"
-	"github.com/HardDie/blog_engine/internal/repository/password"
-	"github.com/HardDie/blog_engine/internal/repository/post"
-	"github.com/HardDie/blog_engine/internal/repository/session"
-	"github.com/HardDie/blog_engine/internal/repository/user"
+	repositoryInvite "github.com/HardDie/blog_engine/internal/repository/invite"
+	repositoryPassword "github.com/HardDie/blog_engine/internal/repository/password"
+	repositoryPost "github.com/HardDie/blog_engine/internal/repository/post"
+	repositorySession "github.com/HardDie/blog_engine/internal/repository/session"
+	repositoryUser "github.com/HardDie/blog_engine/internal/repository/user"
 	"github.com/HardDie/blog_engine/internal/server"
 	"github.com/HardDie/blog_engine/internal/service"
-	"github.com/HardDie/blog_engine/internal/service/auth"
+	serviceAuth "github.com/HardDie/blog_engine/internal/service/auth"
+	serviceInvite "github.com/HardDie/blog_engine/internal/service/invite"
 )
 
 type Application struct {
@@ -50,14 +51,15 @@ func Get() (*Application, error) {
 	v1Router := apiRouter.PathPrefix("/v1").Subrouter()
 
 	// Init repositories
-	userRepository := user.New(app.DB)
-	passwordRepository := password.New(app.DB)
-	sessionRepository := session.New(app.DB)
-	inviteRepository := invite.New(app.DB)
-	postRepository := post.New(app.DB)
+	userRepository := repositoryUser.New(app.DB)
+	passwordRepository := repositoryPassword.New(app.DB)
+	sessionRepository := repositorySession.New(app.DB)
+	inviteRepository := repositoryInvite.New(app.DB)
+	postRepository := repositoryPost.New(app.DB)
 
 	// Init services
-	authService := auth.New(app.Cfg, userRepository, passwordRepository, sessionRepository, inviteRepository)
+	authService := serviceAuth.New(app.Cfg, userRepository, passwordRepository, sessionRepository, inviteRepository)
+	inviteService := serviceInvite.New(userRepository, inviteRepository)
 
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
@@ -71,10 +73,7 @@ func Get() (*Application, error) {
 
 	inviteRouter := v1Router.PathPrefix("/invites").Subrouter()
 	server.NewInvite(
-		service.NewInvite(
-			userRepository,
-			inviteRepository,
-		),
+		inviteService,
 	).RegisterPrivateRouter(inviteRouter, timeoutMiddleware.RequestMiddleware, authMiddleware.RequestMiddleware)
 
 	postsRouter := v1Router.PathPrefix("/posts").Subrouter()
