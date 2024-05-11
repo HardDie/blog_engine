@@ -1,9 +1,10 @@
-package repository
+package invite
 
 import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/dimonrus/gosql"
 
@@ -25,7 +26,7 @@ type Invite struct {
 	db *db.DB
 }
 
-func NewInvite(db *db.DB) *Invite {
+func New(db *db.DB) *Invite {
 	return &Invite{
 		db: db,
 	}
@@ -45,9 +46,9 @@ func (r *Invite) GetByID(ctx context.Context, id int32) (*entity.Invite, error) 
 	err := row.Scan(&invite.UserID, &invite.InviteHash, &invite.IsActivated, &invite.CreatedAt, &invite.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return nil, ErrorNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("Invite.GetByID() Scan: %w", err)
 	}
 	return invite, nil
 }
@@ -67,9 +68,9 @@ func (r *Invite) GetActiveByUserID(ctx context.Context, userID int32) (*entity.I
 	err := row.Scan(&invite.ID, &invite.InviteHash, &invite.CreatedAt, &invite.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return nil, ErrorNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("Invite.GetActiveByUserID() Scan: %w", err)
 	}
 	return invite, nil
 }
@@ -81,7 +82,7 @@ func (r *Invite) GetAllByUserID(ctx context.Context, userID int32) ([]*entity.In
 
 	rows, err := r.db.DB.QueryContext(ctx, q.String(), q.GetArguments()...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Invite.GetAllByUserID() QueryContext: %w", err)
 	}
 	defer rows.Close()
 
@@ -92,13 +93,13 @@ func (r *Invite) GetAllByUserID(ctx context.Context, userID int32) ([]*entity.In
 		}
 		err = rows.Scan(&invite.ID, &invite.InviteHash, &invite.CreatedAt, &invite.UpdatedAt)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Invite.GetAllByUserID() Scan: %w", err)
 		}
 		resp = append(resp, invite)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Invite.GetAllByUserID() Err: %w", err)
 	}
 
 	return resp, nil
@@ -118,9 +119,9 @@ func (r *Invite) GetByInviteHash(ctx context.Context, inviteHash string) (*entit
 	err := row.Scan(&invite.ID, &invite.UserID, &invite.IsActivated, &invite.CreatedAt, &invite.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("invite not exist")
+			return nil, ErrorNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("Invite.GetByInviteHash() Scan: %w", err)
 	}
 	return invite, nil
 }
@@ -139,7 +140,7 @@ func (r *Invite) CreateOrUpdate(ctx context.Context, userID int32, inviteHash st
 
 	err := row.Scan(&invite.ID, &invite.CreatedAt, &invite.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Invite.CreateOrUpdate() Scan: %w", err)
 	}
 	return invite, nil
 }
@@ -153,10 +154,7 @@ func (r *Invite) Delete(ctx context.Context, id int32) error {
 
 	err := row.Scan(&id)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return errors.New("invite not exist")
-		}
-		return err
+		return fmt.Errorf("Invite.Delete() Scan: %w", err)
 	}
 	return nil
 }
@@ -175,10 +173,11 @@ func (r *Invite) Activate(ctx context.Context, id int32) (*entity.Invite, error)
 
 	err := row.Scan(&invite.UserID, &invite.InviteHash, &invite.IsActivated, &invite.CreatedAt, &invite.UpdatedAt)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("invite not exist")
-		}
-		return nil, err
+		return nil, fmt.Errorf("Invite.Activate() Scan: %w", err)
 	}
 	return invite, nil
 }
+
+var (
+	ErrorNotFound = errors.New("invite not found")
+)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/HardDie/blog_engine/internal/repository"
+	"github.com/HardDie/blog_engine/internal/repository/invite"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
@@ -15,10 +16,10 @@ type IInvite interface {
 
 type Invite struct {
 	userRepository   repository.IUser
-	inviteRepository repository.IInvite
+	inviteRepository invite.IInvite
 }
 
-func NewInvite(user repository.IUser, invite repository.IInvite) *Invite {
+func NewInvite(user repository.IUser, invite invite.IInvite) *Invite {
 	return &Invite{
 		userRepository:   user,
 		inviteRepository: invite,
