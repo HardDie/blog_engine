@@ -24,7 +24,7 @@ func (m *AuthMiddleware) RequestMiddleware(next http.Handler) http.Handler {
 
 		// If we got no cookie
 		if cookie == nil || cookie.Value == "" {
-			http.Error(w, "Invalid session", http.StatusUnauthorized)
+			http.Error(w, "Session not found in cookie", http.StatusUnauthorized)
 			return
 		}
 
@@ -32,11 +32,15 @@ func (m *AuthMiddleware) RequestMiddleware(next http.Handler) http.Handler {
 		ctx := r.Context()
 		session, err := m.authService.ValidateCookie(ctx, cookie.Value)
 		if err != nil || session == nil {
-			if errors.Is(err, auth.ErrorSessionHasExpired) {
+			switch {
+			case errors.Is(err, auth.ErrorSessionNotFound):
+				http.Error(w, "Session not found", http.StatusUnauthorized)
+				return
+			case errors.Is(err, auth.ErrorSessionHasExpired):
 				http.Error(w, "Session has expired", http.StatusUnauthorized)
-			} else {
-				http.Error(w, "Invalid session", http.StatusUnauthorized)
+				return
 			}
+			http.Error(w, "Invalid session", http.StatusUnauthorized)
 			return
 		}
 
