@@ -135,7 +135,7 @@ func (s *Auth) Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, erro
 	}
 
 	// Check if the password is locked after failed attempts
-	if password.FailedAttempts >= int32(s.cfg.PwdMaxAttempts) {
+	if password.FailedAttempts >= int64(s.cfg.PwdMaxAttempts) {
 		// Check if the password block time has expired
 		if time.Now().Sub(password.UpdatedAt) <= time.Hour*time.Duration(s.cfg.PwdBlockTime) {
 			return nil, ErrorUserBlocked

@@ -15,9 +15,9 @@ import (
 type IPassword interface {
 	Create(ctx context.Context, userID int64, passwordHash string) (*entity.Password, error)
 	GetByUserID(ctx context.Context, userID int64) (*entity.Password, error)
-	Update(ctx context.Context, id int32, passwordHash string) (*entity.Password, error)
-	IncreaseFailedAttempts(ctx context.Context, id int32) (*entity.Password, error)
-	ResetFailedAttempts(ctx context.Context, id int32) (*entity.Password, error)
+	Update(ctx context.Context, id int64, passwordHash string) (*entity.Password, error)
+	IncreaseFailedAttempts(ctx context.Context, id int64) (*entity.Password, error)
+	ResetFailedAttempts(ctx context.Context, id int64) (*entity.Password, error)
 }
 
 type Password struct {
@@ -68,7 +68,7 @@ func (r *Password) GetByUserID(ctx context.Context, userID int64) (*entity.Passw
 	}
 	return password, nil
 }
-func (r *Password) Update(ctx context.Context, id int32, passwordHash string) (*entity.Password, error) {
+func (r *Password) Update(ctx context.Context, id int64, passwordHash string) (*entity.Password, error) {
 	password := &entity.Password{
 		ID:           id,
 		PasswordHash: passwordHash,
@@ -88,7 +88,7 @@ func (r *Password) Update(ctx context.Context, id int32, passwordHash string) (*
 	}
 	return password, nil
 }
-func (r *Password) IncreaseFailedAttempts(ctx context.Context, id int32) (*entity.Password, error) {
+func (r *Password) IncreaseFailedAttempts(ctx context.Context, id int64) (*entity.Password, error) {
 	password := &entity.Password{
 		ID: id,
 	}
@@ -107,7 +107,7 @@ func (r *Password) IncreaseFailedAttempts(ctx context.Context, id int32) (*entit
 	}
 	return password, nil
 }
-func (r *Password) ResetFailedAttempts(ctx context.Context, id int32) (*entity.Password, error) {
+func (r *Password) ResetFailedAttempts(ctx context.Context, id int64) (*entity.Password, error) {
 	password := &entity.Password{
 		ID: id,
 	}
