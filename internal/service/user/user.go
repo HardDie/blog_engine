@@ -21,10 +21,10 @@ type IUser interface {
 
 type User struct {
 	userRepository     repositoryUser.IUser
-	passwordRepository repositoryPassword.IPassword
+	passwordRepository repositoryPassword.Querier
 }
 
-func New(user repositoryUser.IUser, password repositoryPassword.IPassword) *User {
+func New(user repositoryUser.IUser, password repositoryPassword.Querier) *User {
 	return &User{
 		userRepository:     user,
 		passwordRepository: password,
@@ -61,7 +61,10 @@ func (s *User) Password(ctx context.Context, req *dto.UpdatePasswordDTO, userID 
 	}
 
 	// Update password
-	password, err = s.passwordRepository.Update(ctx, password.ID, hashPassword)
+	password, err = s.passwordRepository.Update(ctx, repositoryPassword.UpdateParams{
+		ID:           password.ID,
+		PasswordHash: hashPassword,
+	})
 	if err != nil {
 		return fmt.Errorf("User.Password() Update: %w", err)
 	}

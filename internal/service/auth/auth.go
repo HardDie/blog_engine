@@ -13,7 +13,7 @@ import (
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
 	repositoryInvite "github.com/HardDie/blog_engine/internal/repository/invite"
-	"github.com/HardDie/blog_engine/internal/repository/password"
+	repositoryPassword "github.com/HardDie/blog_engine/internal/repository/password"
 	repositorySession "github.com/HardDie/blog_engine/internal/repository/session"
 	repositoryUser "github.com/HardDie/blog_engine/internal/repository/user"
 	"github.com/HardDie/blog_engine/internal/utils"
@@ -30,7 +30,7 @@ type IAuth interface {
 
 type Auth struct {
 	userRepository     repositoryUser.IUser
-	passwordRepository password.IPassword
+	passwordRepository repositoryPassword.Querier
 	sessionRepository  repositorySession.ISession
 	inviteRepository   repositoryInvite.Querier
 
@@ -41,7 +41,7 @@ type Auth struct {
 func New(
 	cfg *config.Config,
 	user repositoryUser.IUser,
-	password password.IPassword,
+	password repositoryPassword.Querier,
 	session repositorySession.ISession,
 	invite repositoryInvite.Querier,
 ) *Auth {
@@ -110,7 +110,10 @@ func (s *Auth) Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User
 	}
 
 	// Create a password
-	_, err = s.passwordRepository.Create(ctx, user.ID, hashPassword)
+	_, err = s.passwordRepository.Create(ctx, repositoryPassword.CreateParams{
+		UserID:       user.ID,
+		PasswordHash: hashPassword,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Auth.Register() password.Create: %w", err)
 	}

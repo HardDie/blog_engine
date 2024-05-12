@@ -62,7 +62,7 @@ func Get() (*Application, error) {
 
 	// Init repositories
 	userRepository := repositoryUser.New(app.DB)
-	passwordRepository := repositoryPassword.New(app.DB)
+	passwordRepository := repositoryPassword.New(app.DB.DB)
 	sessionRepository := repositorySession.New(app.DB)
 	inviteRepository := repositoryInvite.New(app.DB.DB)
 	postRepository := repositoryPost.New(app.DB)
