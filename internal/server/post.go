@@ -86,7 +86,7 @@ func (s *Post) Feed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	meta := &utils.Meta{
-		Total: total,
+		Total: int32(total),
 		Limit: req.Limit,
 		Page:  req.Page,
 	}
@@ -118,7 +118,7 @@ type PostPublicGetResponse struct {
 //	  200: PostPublicGetResponse
 func (s *Post) PublicGet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	postID, err := utils.GetInt32FromPath(r, "id")
+	postID, err := utils.GetInt64FromPath(r, "id")
 	if err != nil {
 		logger.Error.Printf("Post.PublicGet() GetInt32FromPath: %s", err.Error())
 		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
@@ -259,7 +259,7 @@ func (s *Post) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.ID, err = utils.GetInt32FromPath(r, "id")
+	req.ID, err = utils.GetInt64FromPath(r, "id")
 	if err != nil {
 		logger.Error.Printf("Post.Edit() GetInt32FromPath: %s", err.Error())
 		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{
@@ -338,7 +338,7 @@ func (s *Post) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	meta := &utils.Meta{
-		Total: total,
+		Total: int32(total),
 		Limit: req.Limit,
 		Page:  req.Page,
 	}

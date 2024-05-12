@@ -3,7 +3,7 @@ package entity
 import "time"
 
 type Post struct {
-	ID          int32      `json:"id"`
+	ID          int64      `json:"id"`
 	UserID      int64      `json:"userId"`
 	User        *User      `json:"user,omitempty"`
 	Title       string     `json:"title"`
