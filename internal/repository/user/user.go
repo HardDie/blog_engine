@@ -14,11 +14,11 @@ import (
 )
 
 type IUser interface {
-	GetByID(ctx context.Context, id int32, showPrivateInfo bool) (*entity.User, error)
+	GetByID(ctx context.Context, id int64, showPrivateInfo bool) (*entity.User, error)
 	FindByName(ctx context.Context, name string) (*entity.User, error)
 	GetByName(ctx context.Context, name string) (*entity.User, error)
-	Create(ctx context.Context, name, displayedName string, invitedByUserID int32) (*entity.User, error)
-	Update(ctx context.Context, req *dto.UpdateProfileDTO, id int32) (*entity.User, error)
+	Create(ctx context.Context, name, displayedName string, invitedByUserID int64) (*entity.User, error)
+	Update(ctx context.Context, req *dto.UpdateProfileDTO, id int64) (*entity.User, error)
 }
 
 type User struct {
@@ -31,7 +31,7 @@ func New(db *db.DB) *User {
 	}
 }
 
-func (r *User) GetByID(ctx context.Context, id int32, showPrivateInfo bool) (*entity.User, error) {
+func (r *User) GetByID(ctx context.Context, id int64, showPrivateInfo bool) (*entity.User, error) {
 	user := &entity.User{
 		ID: id,
 	}
@@ -92,7 +92,7 @@ func (r *User) GetByName(ctx context.Context, name string) (*entity.User, error)
 	}
 	return resp, nil
 }
-func (r *User) Create(ctx context.Context, name, displayedName string, invitedByUserID int32) (*entity.User, error) {
+func (r *User) Create(ctx context.Context, name, displayedName string, invitedByUserID int64) (*entity.User, error) {
 	user := &entity.User{
 		Username:        name,
 		DisplayedName:   displayedName,
@@ -111,7 +111,7 @@ func (r *User) Create(ctx context.Context, name, displayedName string, invitedBy
 	}
 	return user, nil
 }
-func (r *User) Update(ctx context.Context, req *dto.UpdateProfileDTO, id int32) (*entity.User, error) {
+func (r *User) Update(ctx context.Context, req *dto.UpdateProfileDTO, id int64) (*entity.User, error) {
 	user := &entity.User{
 		ID:            id,
 		DisplayedName: req.DisplayedName,

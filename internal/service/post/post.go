@@ -15,9 +15,9 @@ type IPost interface {
 	Feed(ctx context.Context, req *dto.FeedPostDTO) ([]*entity.Post, int32, error)
 	PublicGet(ctx context.Context, id int32) (*entity.Post, error)
 
-	Create(ctx context.Context, req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
-	Edit(ctx context.Context, req *dto.EditPostDTO, userID int32) (*entity.Post, error)
-	List(ctx context.Context, req *dto.ListPostDTO, userID int32) ([]*entity.Post, int32, error)
+	Create(ctx context.Context, req *dto.CreatePostDTO, userID int64) (*entity.Post, error)
+	Edit(ctx context.Context, req *dto.EditPostDTO, userID int64) (*entity.Post, error)
+	List(ctx context.Context, req *dto.ListPostDTO, userID int64) ([]*entity.Post, int32, error)
 }
 
 type Post struct {
@@ -46,7 +46,7 @@ func (p *Post) Feed(ctx context.Context, req *dto.FeedPostDTO) ([]*entity.Post, 
 		posts = []*entity.Post{}
 	}
 	// Enrich every post with user info
-	users := make(map[int32]*entity.User)
+	users := make(map[int64]*entity.User)
 	for i, post := range posts {
 		user, ok := users[post.UserID]
 		if ok {
@@ -78,21 +78,21 @@ func (p *Post) PublicGet(ctx context.Context, id int32) (*entity.Post, error) {
 	post.User = user
 	return post, nil
 }
-func (p *Post) Create(ctx context.Context, req *dto.CreatePostDTO, userID int32) (*entity.Post, error) {
+func (p *Post) Create(ctx context.Context, req *dto.CreatePostDTO, userID int64) (*entity.Post, error) {
 	resp, err := p.postRepository.Create(ctx, req, userID)
 	if err != nil {
 		return nil, fmt.Errorf("Post.Create() Create: %w", err)
 	}
 	return resp, nil
 }
-func (p *Post) Edit(ctx context.Context, req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
+func (p *Post) Edit(ctx context.Context, req *dto.EditPostDTO, userID int64) (*entity.Post, error) {
 	resp, err := p.postRepository.Edit(ctx, req, userID)
 	if err != nil {
 		return nil, fmt.Errorf("Post.Edit() Edit: %w", err)
 	}
 	return resp, nil
 }
-func (p *Post) List(ctx context.Context, req *dto.ListPostDTO, userID int32) ([]*entity.Post, int32, error) {
+func (p *Post) List(ctx context.Context, req *dto.ListPostDTO, userID int64) ([]*entity.Post, int32, error) {
 	posts, count, err := p.postRepository.List(ctx, &dto.ListPostFilter{
 		Limit:                req.Limit,
 		Page:                 req.Page,
@@ -104,7 +104,7 @@ func (p *Post) List(ctx context.Context, req *dto.ListPostDTO, userID int32) ([]
 		return nil, 0, fmt.Errorf("Post.List() List: %w", err)
 	}
 	// Enrich every post with user info
-	users := make(map[int32]*entity.User)
+	users := make(map[int64]*entity.User)
 	for i, post := range posts {
 		user, ok := users[post.UserID]
 		if ok {

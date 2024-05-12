@@ -41,6 +41,6 @@ type ListPostFilter struct {
 	Limit                int32
 	Page                 int32
 	Query                string
-	RelatedToUser        int32
+	RelatedToUser        int64
 	DisplayOnlyPublished bool
 }

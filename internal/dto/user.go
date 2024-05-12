@@ -1,7 +1,7 @@
 package dto
 
 type GetUserDTO struct {
-	ID int32 `json:"id" validate:"gt=0"`
+	ID int64 `json:"id" validate:"gt=0"`
 }
 
 type UpdatePasswordDTO struct {

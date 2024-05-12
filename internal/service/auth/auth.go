@@ -22,9 +22,9 @@ type IAuth interface {
 	Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User, error)
 	Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, error)
 	Logout(ctx context.Context, sessionID int32) error
-	GenerateCookie(ctx context.Context, userID int32) (string, error)
+	GenerateCookie(ctx context.Context, userID int64) (string, error)
 	ValidateCookie(ctx context.Context, session string) (*entity.Session, error)
-	GetUserInfo(ctx context.Context, userID int32) (*entity.User, error)
+	GetUserInfo(ctx context.Context, userID int64) (*entity.User, error)
 }
 
 type Auth struct {
@@ -172,7 +172,7 @@ func (s *Auth) Logout(ctx context.Context, sessionID int32) error {
 	}
 	return nil
 }
-func (s *Auth) GenerateCookie(ctx context.Context, userID int32) (string, error) {
+func (s *Auth) GenerateCookie(ctx context.Context, userID int64) (string, error) {
 	// Generate session key
 	sessionKey, err := utils.GenerateSessionKey()
 	if err != nil {
@@ -205,7 +205,7 @@ func (s *Auth) ValidateCookie(ctx context.Context, sessionToken string) (*entity
 	}
 	return session, nil
 }
-func (s *Auth) GetUserInfo(ctx context.Context, userID int32) (*entity.User, error) {
+func (s *Auth) GetUserInfo(ctx context.Context, userID int64) (*entity.User, error) {
 	user, err := s.userRepository.GetByID(ctx, userID, true)
 	if err != nil {
 		switch {

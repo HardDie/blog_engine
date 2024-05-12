@@ -13,10 +13,10 @@ import (
 )
 
 type IUser interface {
-	Get(ctx context.Context, id int32) (*entity.User, error)
+	Get(ctx context.Context, userID int64) (*entity.User, error)
 
-	Password(ctx context.Context, req *dto.UpdatePasswordDTO, userID int32) error
-	Profile(ctx context.Context, req *dto.UpdateProfileDTO, userID int32) (*entity.User, error)
+	Password(ctx context.Context, req *dto.UpdatePasswordDTO, userID int64) error
+	Profile(ctx context.Context, req *dto.UpdateProfileDTO, userID int64) (*entity.User, error)
 }
 
 type User struct {
@@ -31,8 +31,8 @@ func New(user repositoryUser.IUser, password repositoryPassword.IPassword) *User
 	}
 }
 
-func (s *User) Get(ctx context.Context, id int32) (*entity.User, error) {
-	resp, err := s.userRepository.GetByID(ctx, id, false)
+func (s *User) Get(ctx context.Context, userID int64) (*entity.User, error) {
+	resp, err := s.userRepository.GetByID(ctx, userID, false)
 	if err != nil {
 		switch {
 		case errors.Is(err, repositoryUser.ErrorNotFound):
@@ -42,7 +42,7 @@ func (s *User) Get(ctx context.Context, id int32) (*entity.User, error) {
 	}
 	return resp, nil
 }
-func (s *User) Password(ctx context.Context, req *dto.UpdatePasswordDTO, userID int32) error {
+func (s *User) Password(ctx context.Context, req *dto.UpdatePasswordDTO, userID int64) error {
 	// Get password from DB
 	password, err := s.passwordRepository.GetByUserID(ctx, userID)
 	if err != nil {
@@ -61,13 +61,13 @@ func (s *User) Password(ctx context.Context, req *dto.UpdatePasswordDTO, userID 
 	}
 
 	// Update password
-	password, err = s.passwordRepository.Update(ctx, userID, hashPassword)
+	password, err = s.passwordRepository.Update(ctx, password.ID, hashPassword)
 	if err != nil {
 		return fmt.Errorf("User.Password() Update: %w", err)
 	}
 	return nil
 }
-func (s *User) Profile(ctx context.Context, req *dto.UpdateProfileDTO, userID int32) (*entity.User, error) {
+func (s *User) Profile(ctx context.Context, req *dto.UpdateProfileDTO, userID int64) (*entity.User, error) {
 	resp, err := s.userRepository.Update(ctx, req, userID)
 	if err != nil {
 		return nil, fmt.Errorf("User.Profile() Update: %w", err)

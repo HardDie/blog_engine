@@ -17,9 +17,9 @@ import (
 
 type IPost interface {
 	List(ctx context.Context, filter *dto.ListPostFilter) ([]*entity.Post, int32, error)
-	Create(ctx context.Context, req *dto.CreatePostDTO, userID int32) (*entity.Post, error)
-	Edit(ctx context.Context, req *dto.EditPostDTO, userID int32) (*entity.Post, error)
-	GetByID(ctx context.Context, id int32, userID *int32) (*entity.Post, error)
+	Create(ctx context.Context, req *dto.CreatePostDTO, userID int64) (*entity.Post, error)
+	Edit(ctx context.Context, req *dto.EditPostDTO, userID int64) (*entity.Post, error)
+	GetByID(ctx context.Context, id int32, userID *int64) (*entity.Post, error)
 }
 
 type Post struct {
@@ -77,7 +77,7 @@ func (r *Post) List(ctx context.Context, filter *dto.ListPostFilter) ([]*entity.
 
 	return res, total, nil
 }
-func (r *Post) Create(ctx context.Context, req *dto.CreatePostDTO, userID int32) (*entity.Post, error) {
+func (r *Post) Create(ctx context.Context, req *dto.CreatePostDTO, userID int64) (*entity.Post, error) {
 	post := &entity.Post{
 		UserID:      userID,
 		Title:       req.Title,
@@ -100,7 +100,7 @@ func (r *Post) Create(ctx context.Context, req *dto.CreatePostDTO, userID int32)
 	}
 	return post, nil
 }
-func (r *Post) Edit(ctx context.Context, req *dto.EditPostDTO, userID int32) (*entity.Post, error) {
+func (r *Post) Edit(ctx context.Context, req *dto.EditPostDTO, userID int64) (*entity.Post, error) {
 	post := &entity.Post{
 		ID:          req.ID,
 		UserID:      userID,
@@ -131,7 +131,7 @@ func (r *Post) Edit(ctx context.Context, req *dto.EditPostDTO, userID int32) (*e
 	}
 	return post, nil
 }
-func (r *Post) GetByID(ctx context.Context, id int32, userID *int32) (*entity.Post, error) {
+func (r *Post) GetByID(ctx context.Context, id int32, userID *int64) (*entity.Post, error) {
 	post := &entity.Post{
 		ID: id,
 	}

@@ -61,7 +61,7 @@ type UserGetResponse struct {
 func (s *User) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, err := utils.GetInt32FromPath(r, "id")
+	userID, err := utils.GetInt64FromPath(r, "id")
 	if err != nil {
 		logger.Error.Printf("User.Get() GetInt32FromPath: %s", err.Error())
 		utils.WriteJSONHTTPResponse(w, http.StatusBadRequest, JSONResponse{

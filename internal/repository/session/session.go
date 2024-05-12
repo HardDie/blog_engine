@@ -13,7 +13,7 @@ import (
 )
 
 type ISession interface {
-	CreateOrUpdate(ctx context.Context, userID int32, sessionHash string) (*entity.Session, error)
+	CreateOrUpdate(ctx context.Context, userID int64, sessionHash string) (*entity.Session, error)
 	GetByUserID(ctx context.Context, sessionHash string) (*entity.Session, error)
 	DeleteByID(ctx context.Context, id int32) error
 }
@@ -28,7 +28,7 @@ func New(db *db.DB) *Session {
 	}
 }
 
-func (r *Session) CreateOrUpdate(ctx context.Context, userID int32, sessionHash string) (*entity.Session, error) {
+func (r *Session) CreateOrUpdate(ctx context.Context, userID int64, sessionHash string) (*entity.Session, error) {
 	session := &entity.Session{
 		UserID:      userID,
 		SessionHash: sessionHash,

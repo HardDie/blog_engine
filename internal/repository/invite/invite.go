@@ -14,10 +14,10 @@ import (
 
 type IInvite interface {
 	GetByID(ctx context.Context, id int32) (*entity.Invite, error)
-	GetActiveByUserID(ctx context.Context, userID int32) (*entity.Invite, error)
+	GetActiveByUserID(ctx context.Context, userID int64) (*entity.Invite, error)
 	GetByInviteHash(ctx context.Context, inviteHash string) (*entity.Invite, error)
-	GetAllByUserID(ctx context.Context, userID int32) ([]*entity.Invite, error)
-	CreateOrUpdate(ctx context.Context, userID int32, inviteHash string) (*entity.Invite, error)
+	GetAllByUserID(ctx context.Context, userID int64) ([]*entity.Invite, error)
+	CreateOrUpdate(ctx context.Context, userID int64, inviteHash string) (*entity.Invite, error)
 	Delete(ctx context.Context, id int32) error
 	Activate(ctx context.Context, id int32) (*entity.Invite, error)
 }
@@ -52,7 +52,7 @@ func (r *Invite) GetByID(ctx context.Context, id int32) (*entity.Invite, error) 
 	}
 	return invite, nil
 }
-func (r *Invite) GetActiveByUserID(ctx context.Context, userID int32) (*entity.Invite, error) {
+func (r *Invite) GetActiveByUserID(ctx context.Context, userID int64) (*entity.Invite, error) {
 	invite := &entity.Invite{
 		UserID:      userID,
 		IsActivated: false,
@@ -74,7 +74,7 @@ func (r *Invite) GetActiveByUserID(ctx context.Context, userID int32) (*entity.I
 	}
 	return invite, nil
 }
-func (r *Invite) GetAllByUserID(ctx context.Context, userID int32) ([]*entity.Invite, error) {
+func (r *Invite) GetAllByUserID(ctx context.Context, userID int64) ([]*entity.Invite, error) {
 	q := gosql.NewSelect().From("invites")
 	q.Columns().Add("id", "invite_hash", "created_at", "updated_at")
 	q.Where().AddExpression("user_id = ?", userID)
@@ -125,7 +125,7 @@ func (r *Invite) GetByInviteHash(ctx context.Context, inviteHash string) (*entit
 	}
 	return invite, nil
 }
-func (r *Invite) CreateOrUpdate(ctx context.Context, userID int32, inviteHash string) (*entity.Invite, error) {
+func (r *Invite) CreateOrUpdate(ctx context.Context, userID int64, inviteHash string) (*entity.Invite, error) {
 	invite := &entity.Invite{
 		UserID:     userID,
 		InviteHash: inviteHash,

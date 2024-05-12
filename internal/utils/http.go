@@ -82,3 +82,18 @@ func GetInt32FromPath(r *http.Request, key string) (int32, error) {
 	}
 	return int32(res), nil
 }
+func GetInt64FromPath(r *http.Request, key string) (int64, error) {
+	m := mux.Vars(r)
+	if m == nil {
+		return 0, fmt.Errorf("can't get map of variables from request")
+	}
+	val, ok := m[key]
+	if !ok {
+		return 0, fmt.Errorf("such key %s in path not exist", key)
+	}
+	res, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("bad int value in path: %w", err)
+	}
+	return res, nil
+}

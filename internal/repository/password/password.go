@@ -13,8 +13,8 @@ import (
 )
 
 type IPassword interface {
-	Create(ctx context.Context, userID int32, passwordHash string) (*entity.Password, error)
-	GetByUserID(ctx context.Context, userID int32) (*entity.Password, error)
+	Create(ctx context.Context, userID int64, passwordHash string) (*entity.Password, error)
+	GetByUserID(ctx context.Context, userID int64) (*entity.Password, error)
 	Update(ctx context.Context, id int32, passwordHash string) (*entity.Password, error)
 	IncreaseFailedAttempts(ctx context.Context, id int32) (*entity.Password, error)
 	ResetFailedAttempts(ctx context.Context, id int32) (*entity.Password, error)
@@ -30,7 +30,7 @@ func New(db *db.DB) *Password {
 	}
 }
 
-func (r *Password) Create(ctx context.Context, userID int32, passwordHash string) (*entity.Password, error) {
+func (r *Password) Create(ctx context.Context, userID int64, passwordHash string) (*entity.Password, error) {
 	password := &entity.Password{
 		UserID:       userID,
 		PasswordHash: passwordHash,
@@ -48,7 +48,7 @@ func (r *Password) Create(ctx context.Context, userID int32, passwordHash string
 	}
 	return password, nil
 }
-func (r *Password) GetByUserID(ctx context.Context, userID int32) (*entity.Password, error) {
+func (r *Password) GetByUserID(ctx context.Context, userID int64) (*entity.Password, error) {
 	password := &entity.Password{
 		UserID: userID,
 	}

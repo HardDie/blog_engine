@@ -4,7 +4,7 @@ import "time"
 
 type Session struct {
 	ID          int32      `json:"id"`
-	UserID      int32      `json:"userId"`
+	UserID      int64      `json:"userId"`
 	SessionHash string     `json:"sessionHash"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`

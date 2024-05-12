@@ -11,8 +11,8 @@ import (
 )
 
 type IInvite interface {
-	Generate(ctx context.Context, userID int32) (string, error)
-	Revoke(ctx context.Context, userID int32) error
+	Generate(ctx context.Context, userID int64) (string, error)
+	Revoke(ctx context.Context, userID int64) error
 }
 
 type Invite struct {
@@ -27,7 +27,7 @@ func New(user repositoryUser.IUser, invite repositoryInvite.IInvite) *Invite {
 	}
 }
 
-func (s *Invite) Generate(ctx context.Context, userID int32) (string, error) {
+func (s *Invite) Generate(ctx context.Context, userID int64) (string, error) {
 	// Generate invite
 	inviteCode, err := utils.UUIDGenerate()
 	if err != nil {
@@ -42,7 +42,7 @@ func (s *Invite) Generate(ctx context.Context, userID int32) (string, error) {
 	}
 	return inviteCode, nil
 }
-func (s *Invite) Revoke(ctx context.Context, userID int32) error {
+func (s *Invite) Revoke(ctx context.Context, userID int64) error {
 	invite, err := s.inviteRepository.GetActiveByUserID(ctx, userID)
 	if err != nil {
 		switch {
