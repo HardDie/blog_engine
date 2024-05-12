@@ -70,7 +70,7 @@ func Get() (*Application, error) {
 	// Init services
 	authService := serviceAuth.New(app.Cfg, userRepository, passwordRepository, sessionRepository, inviteRepository)
 	inviteService := serviceInvite.New(userRepository, inviteRepository)
-	postService := servicePost.New(postRepository)
+	postService := servicePost.New(postRepository, userRepository)
 	userService := serviceUser.New(userRepository, passwordRepository)
 
 	// Middleware
