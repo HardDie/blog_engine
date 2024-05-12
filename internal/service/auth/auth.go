@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"sync"
@@ -31,7 +32,7 @@ type Auth struct {
 	userRepository     repositoryUser.IUser
 	passwordRepository password.IPassword
 	sessionRepository  repositorySession.ISession
-	inviteRepository   repositoryInvite.IInvite
+	inviteRepository   repositoryInvite.Querier
 
 	cfg   *config.Config
 	mutex sync.Mutex
@@ -42,7 +43,7 @@ func New(
 	user repositoryUser.IUser,
 	password password.IPassword,
 	session repositorySession.ISession,
-	invite repositoryInvite.IInvite,
+	invite repositoryInvite.Querier,
 ) *Auth {
 	return &Auth{
 		cfg:                cfg,
@@ -66,7 +67,7 @@ func (s *Auth) Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User
 	invite, err := s.inviteRepository.GetByInviteHash(ctx, hashInvite)
 	if err != nil {
 		switch {
-		case errors.Is(err, repositoryInvite.ErrorNotFound):
+		case errors.Is(err, sql.ErrNoRows):
 			return nil, ErrorInviteNotFound
 		}
 		return nil, fmt.Errorf("Auth.Register() GetByInviteHash: %w", err)

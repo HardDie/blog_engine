@@ -2,6 +2,7 @@ package invite
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -17,10 +18,10 @@ type IInvite interface {
 
 type Invite struct {
 	userRepository   repositoryUser.IUser
-	inviteRepository repositoryInvite.IInvite
+	inviteRepository repositoryInvite.Querier
 }
 
-func New(user repositoryUser.IUser, invite repositoryInvite.IInvite) *Invite {
+func New(user repositoryUser.IUser, invite repositoryInvite.Querier) *Invite {
 	return &Invite{
 		userRepository:   user,
 		inviteRepository: invite,
@@ -36,7 +37,10 @@ func (s *Invite) Generate(ctx context.Context, userID int64) (string, error) {
 	// Hashing invite for DB
 	inviteHash := utils.HashSha256(inviteCode)
 	// Write hash of invite into DB
-	_, err = s.inviteRepository.CreateOrUpdate(ctx, userID, inviteHash)
+	_, err = s.inviteRepository.CreateOrUpdate(ctx, repositoryInvite.CreateOrUpdateParams{
+		UserID:     userID,
+		InviteHash: inviteHash,
+	})
 	if err != nil {
 		return "", fmt.Errorf("Invite.Generate() CreateOrUpdate: %w", err)
 	}
@@ -46,7 +50,7 @@ func (s *Invite) Revoke(ctx context.Context, userID int64) error {
 	invite, err := s.inviteRepository.GetActiveByUserID(ctx, userID)
 	if err != nil {
 		switch {
-		case errors.Is(err, repositoryInvite.ErrorNotFound):
+		case errors.Is(err, sql.ErrNoRows):
 			return ErrorInviteNotFound
 		}
 		return err
