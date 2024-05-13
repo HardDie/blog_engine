@@ -86,7 +86,8 @@ func (s *Auth) Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User
 	u, err := s.userRepository.GetByName(ctx, req.Username)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-	// continue
+		u = nil
+		// continue
 	default:
 		return nil, fmt.Errorf("Auth.Register() FindByName: %w", err)
 	}
