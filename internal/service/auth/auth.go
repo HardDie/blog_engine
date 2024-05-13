@@ -22,7 +22,7 @@ import (
 type IAuth interface {
 	Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User, error)
 	Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, error)
-	Logout(ctx context.Context, sessionID int32) error
+	Logout(ctx context.Context, sessionID int64) error
 	GenerateCookie(ctx context.Context, userID int64) (string, error)
 	ValidateCookie(ctx context.Context, session string) (*entity.Session, error)
 	GetUserInfo(ctx context.Context, userID int64) (*entity.User, error)
@@ -31,7 +31,7 @@ type IAuth interface {
 type Auth struct {
 	userRepository     repositoryUser.IUser
 	passwordRepository repositoryPassword.Querier
-	sessionRepository  repositorySession.ISession
+	sessionRepository  repositorySession.Querier
 	inviteRepository   repositoryInvite.Querier
 
 	cfg   *config.Config
@@ -42,7 +42,7 @@ func New(
 	cfg *config.Config,
 	user repositoryUser.IUser,
 	password repositoryPassword.Querier,
-	session repositorySession.ISession,
+	session repositorySession.Querier,
 	invite repositoryInvite.Querier,
 ) *Auth {
 	return &Auth{
@@ -169,7 +169,7 @@ func (s *Auth) Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, erro
 	}
 	return user, nil
 }
-func (s *Auth) Logout(ctx context.Context, sessionID int32) error {
+func (s *Auth) Logout(ctx context.Context, sessionID int64) error {
 	err := s.sessionRepository.DeleteByID(ctx, sessionID)
 	if err != nil {
 		return fmt.Errorf("Auth.Logout() DeleteByID: %w", err)
@@ -184,7 +184,10 @@ func (s *Auth) GenerateCookie(ctx context.Context, userID int64) (string, error)
 	}
 
 	// Write session to DB
-	_, err = s.sessionRepository.CreateOrUpdate(ctx, userID, utils.HashSha256(sessionKey))
+	_, err = s.sessionRepository.CreateOrUpdate(ctx, repositorySession.CreateOrUpdateParams{
+		UserID:      userID,
+		SessionHash: utils.HashSha256(sessionKey),
+	})
 	if err != nil {
 		return "", fmt.Errorf("Auth.GenerateCookie() CreateOrUpdate: %w", err)
 	}
@@ -194,13 +197,20 @@ func (s *Auth) GenerateCookie(ctx context.Context, userID int64) (string, error)
 func (s *Auth) ValidateCookie(ctx context.Context, sessionToken string) (*entity.Session, error) {
 	// Check if session exist
 	sessionHash := utils.HashSha256(sessionToken)
-	session, err := s.sessionRepository.GetByUserID(ctx, sessionHash)
+	resp, err := s.sessionRepository.GetByUserID(ctx, sessionHash)
 	if err != nil {
 		switch {
-		case errors.Is(err, repositorySession.ErrorNotFound):
+		case errors.Is(err, sql.ErrNoRows):
 			return nil, ErrorSessionNotFound
 		}
 		return nil, fmt.Errorf("Auth.ValidateCookie() GetyByUserID: %w", err)
+	}
+	session := &entity.Session{
+		ID:          resp.ID,
+		UserID:      resp.UserID,
+		SessionHash: resp.SessionHash,
+		CreatedAt:   resp.CreatedAt,
+		UpdatedAt:   resp.UpdatedAt,
 	}
 
 	// Check if session is not expired
