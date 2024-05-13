@@ -33,3 +33,9 @@ func NewSqlInt64(val *int64) sql.NullInt64 {
 		Valid: true,
 	}
 }
+func SqlStringToString(val sql.NullString) *string {
+	if !val.Valid {
+		return nil
+	}
+	return &val.String
+}

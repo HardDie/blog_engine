@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -20,11 +21,11 @@ type IUser interface {
 }
 
 type User struct {
-	userRepository     repositoryUser.IUser
+	userRepository     repositoryUser.Querier
 	passwordRepository repositoryPassword.Querier
 }
 
-func New(user repositoryUser.IUser, password repositoryPassword.Querier) *User {
+func New(user repositoryUser.Querier, password repositoryPassword.Querier) *User {
 	return &User{
 		userRepository:     user,
 		passwordRepository: password,
@@ -32,15 +33,22 @@ func New(user repositoryUser.IUser, password repositoryPassword.Querier) *User {
 }
 
 func (s *User) Get(ctx context.Context, userID int64) (*entity.User, error) {
-	resp, err := s.userRepository.GetByID(ctx, userID, false)
+	resp, err := s.userRepository.GetByIDPublic(ctx, userID)
 	if err != nil {
 		switch {
-		case errors.Is(err, repositoryUser.ErrorNotFound):
+		case errors.Is(err, sql.ErrNoRows):
 			return nil, ErrorUserNotFound
 		}
 		return nil, fmt.Errorf("User.Get() GetByID: %w", err)
 	}
-	return resp, nil
+	user := &entity.User{
+		ID:              resp.ID,
+		DisplayedName:   resp.DisplayedName,
+		InvitedByUserID: resp.InvitedByUser,
+		CreatedAt:       resp.CreatedAt,
+		UpdatedAt:       resp.UpdatedAt,
+	}
+	return user, nil
 }
 func (s *User) Password(ctx context.Context, req *dto.UpdatePasswordDTO, userID int64) error {
 	// Get password from DB
@@ -71,11 +79,24 @@ func (s *User) Password(ctx context.Context, req *dto.UpdatePasswordDTO, userID 
 	return nil
 }
 func (s *User) Profile(ctx context.Context, req *dto.UpdateProfileDTO, userID int64) (*entity.User, error) {
-	resp, err := s.userRepository.Update(ctx, req, userID)
+	resp, err := s.userRepository.Update(ctx, repositoryUser.UpdateParams{
+		ID:            userID,
+		DisplayedName: req.DisplayedName,
+		Email:         utils.NewSqlString(req.Email),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("User.Profile() Update: %w", err)
 	}
-	return resp, nil
+	user := &entity.User{
+		ID:              resp.ID,
+		Username:        resp.Username,
+		DisplayedName:   resp.DisplayedName,
+		Email:           utils.SqlStringToString(resp.Email),
+		InvitedByUserID: resp.InvitedByUser,
+		CreatedAt:       resp.CreatedAt,
+		UpdatedAt:       resp.UpdatedAt,
+	}
+	return user, nil
 }
 
 var (

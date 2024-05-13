@@ -29,7 +29,7 @@ type IAuth interface {
 }
 
 type Auth struct {
-	userRepository     repositoryUser.IUser
+	userRepository     repositoryUser.Querier
 	passwordRepository repositoryPassword.Querier
 	sessionRepository  repositorySession.Querier
 	inviteRepository   repositoryInvite.Querier
@@ -40,7 +40,7 @@ type Auth struct {
 
 func New(
 	cfg *config.Config,
-	user repositoryUser.IUser,
+	user repositoryUser.Querier,
 	password repositoryPassword.Querier,
 	session repositorySession.Querier,
 	invite repositoryInvite.Querier,
@@ -83,11 +83,14 @@ func (s *Auth) Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User
 	}
 
 	// Check if username is not busy
-	user, err := s.userRepository.FindByName(ctx, req.Username)
-	if err != nil {
+	u, err := s.userRepository.GetByName(ctx, req.Username)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+	// continue
+	default:
 		return nil, fmt.Errorf("Auth.Register() FindByName: %w", err)
 	}
-	if user != nil {
+	if u != nil {
 		return nil, ErrorUserExist
 	}
 
@@ -104,9 +107,22 @@ func (s *Auth) Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User
 	}
 
 	// Create a user
-	user, err = s.userRepository.Create(ctx, req.Username, req.DisplayedName, invite.UserID)
+	resp, err := s.userRepository.Create(ctx, repositoryUser.CreateParams{
+		Username:      req.Username,
+		DisplayedName: req.DisplayedName,
+		InvitedByUser: invite.UserID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Auth.Register() user.Create: %w", err)
+	}
+	user := &entity.User{
+		ID:              resp.ID,
+		Username:        resp.Username,
+		DisplayedName:   resp.DisplayedName,
+		Email:           utils.SqlStringToString(resp.Email),
+		InvitedByUserID: resp.InvitedByUser,
+		CreatedAt:       resp.CreatedAt,
+		UpdatedAt:       resp.UpdatedAt,
 	}
 
 	// Create a password
@@ -122,13 +138,22 @@ func (s *Auth) Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User
 }
 func (s *Auth) Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, error) {
 	// Check if such user exist
-	user, err := s.userRepository.GetByName(ctx, req.Username)
+	resp, err := s.userRepository.GetByName(ctx, req.Username)
 	if err != nil {
 		switch {
-		case errors.Is(err, repositoryUser.ErrorNotFound):
+		case errors.Is(err, sql.ErrNoRows):
 			return nil, ErrorUserNotFound
 		}
 		return nil, fmt.Errorf("Auth.Login() user.GetByName: %w", err)
+	}
+	user := &entity.User{
+		ID:              resp.ID,
+		Username:        resp.Username,
+		DisplayedName:   resp.DisplayedName,
+		Email:           utils.SqlStringToString(resp.Email),
+		InvitedByUserID: resp.InvitedByUser,
+		CreatedAt:       resp.CreatedAt,
+		UpdatedAt:       resp.UpdatedAt,
 	}
 
 	// Get password from DB
@@ -220,13 +245,22 @@ func (s *Auth) ValidateCookie(ctx context.Context, sessionToken string) (*entity
 	return session, nil
 }
 func (s *Auth) GetUserInfo(ctx context.Context, userID int64) (*entity.User, error) {
-	user, err := s.userRepository.GetByID(ctx, userID, true)
+	resp, err := s.userRepository.GetByIDPrivate(ctx, userID)
 	if err != nil {
 		switch {
-		case errors.Is(err, repositoryUser.ErrorNotFound):
+		case errors.Is(err, sql.ErrNoRows):
 			return nil, ErrorUserNotFound
 		}
 		return nil, fmt.Errorf("Auth.GetUserInfo() GetByID: %w", err)
+	}
+	user := &entity.User{
+		ID:              resp.ID,
+		Username:        resp.Username,
+		DisplayedName:   resp.DisplayedName,
+		Email:           utils.SqlStringToString(resp.Email),
+		InvitedByUserID: resp.InvitedByUser,
+		CreatedAt:       resp.CreatedAt,
+		UpdatedAt:       resp.UpdatedAt,
 	}
 	return user, nil
 }

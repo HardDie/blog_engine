@@ -25,10 +25,10 @@ type IPost interface {
 
 type Post struct {
 	postRepository repositoryPost.Querier
-	userRepository repositoryUser.IUser
+	userRepository repositoryUser.Querier
 }
 
-func New(post repositoryPost.Querier, user repositoryUser.IUser) *Post {
+func New(post repositoryPost.Querier, user repositoryUser.Querier) *Post {
 	return &Post{
 		postRepository: post,
 		userRepository: user,
@@ -72,9 +72,16 @@ func (p *Post) Feed(ctx context.Context, req *dto.FeedPostDTO) ([]*entity.Post, 
 			continue
 		}
 
-		user, err := p.userRepository.GetByID(ctx, post.UserID, false)
+		resp, err := p.userRepository.GetByIDPublic(ctx, post.UserID)
 		if err != nil {
 			return nil, 0, fmt.Errorf("Post.Feed() user.GetByID: %w", err)
+		}
+		user = &entity.User{
+			ID:              resp.ID,
+			DisplayedName:   resp.DisplayedName,
+			InvitedByUserID: resp.InvitedByUser,
+			CreatedAt:       resp.CreatedAt,
+			UpdatedAt:       resp.UpdatedAt,
 		}
 		users[post.UserID] = user
 		post.User = user
@@ -106,9 +113,16 @@ func (p *Post) PublicGet(ctx context.Context, id int64) (*entity.Post, error) {
 		UpdatedAt:   resp.UpdatedAt,
 	}
 
-	user, err := p.userRepository.GetByID(ctx, post.UserID, false)
+	respUser, err := p.userRepository.GetByIDPublic(ctx, post.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("Post.PublicGet() user.GetByID: %w", err)
+	}
+	user := &entity.User{
+		ID:              respUser.ID,
+		DisplayedName:   respUser.DisplayedName,
+		InvitedByUserID: respUser.InvitedByUser,
+		CreatedAt:       respUser.CreatedAt,
+		UpdatedAt:       respUser.UpdatedAt,
 	}
 	post.User = user
 	return post, nil
@@ -205,9 +219,16 @@ func (p *Post) List(ctx context.Context, req *dto.ListPostDTO, userID int64) ([]
 			continue
 		}
 
-		user, err := p.userRepository.GetByID(ctx, post.UserID, false)
+		resp, err := p.userRepository.GetByIDPublic(ctx, post.UserID)
 		if err != nil {
 			return nil, 0, fmt.Errorf("Post.List() user.GetByID: %w", err)
+		}
+		user = &entity.User{
+			ID:              resp.ID,
+			DisplayedName:   resp.DisplayedName,
+			InvitedByUserID: resp.InvitedByUser,
+			CreatedAt:       resp.CreatedAt,
+			UpdatedAt:       resp.UpdatedAt,
 		}
 		users[post.UserID] = user
 		post.User = user

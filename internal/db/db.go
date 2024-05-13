@@ -8,7 +8,7 @@ import (
 )
 
 type DB struct {
-	DB *sql.DB
+	*sql.DB
 }
 
 func Get(dbpath string) (*DB, error) {

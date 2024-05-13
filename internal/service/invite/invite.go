@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	repositoryInvite "github.com/HardDie/blog_engine/internal/repository/invite"
-	repositoryUser "github.com/HardDie/blog_engine/internal/repository/user"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 
@@ -17,13 +16,11 @@ type IInvite interface {
 }
 
 type Invite struct {
-	userRepository   repositoryUser.IUser
 	inviteRepository repositoryInvite.Querier
 }
 
-func New(user repositoryUser.IUser, invite repositoryInvite.Querier) *Invite {
+func New(invite repositoryInvite.Querier) *Invite {
 	return &Invite{
-		userRepository:   user,
 		inviteRepository: invite,
 	}
 }

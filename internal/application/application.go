@@ -62,14 +62,14 @@ func Get() (*Application, error) {
 
 	// Init repositories
 	userRepository := repositoryUser.New(app.DB)
-	passwordRepository := repositoryPassword.New(app.DB.DB)
-	sessionRepository := repositorySession.New(app.DB.DB)
-	inviteRepository := repositoryInvite.New(app.DB.DB)
-	postRepository := repositoryPost.New(app.DB.DB)
+	passwordRepository := repositoryPassword.New(app.DB)
+	sessionRepository := repositorySession.New(app.DB)
+	inviteRepository := repositoryInvite.New(app.DB)
+	postRepository := repositoryPost.New(app.DB)
 
 	// Init services
 	authService := serviceAuth.New(app.Cfg, userRepository, passwordRepository, sessionRepository, inviteRepository)
-	inviteService := serviceInvite.New(userRepository, inviteRepository)
+	inviteService := serviceInvite.New(inviteRepository)
 	postService := servicePost.New(postRepository, userRepository)
 	userService := serviceUser.New(userRepository, passwordRepository)
 
