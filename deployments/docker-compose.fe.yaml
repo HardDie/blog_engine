@@ -1,0 +1,17 @@
+version: '3.0'
+
+services:
+  app:
+    build:
+      context: ../
+      dockerfile: ./deployments/Dockerfile
+    ports:
+      - 8080:8080
+  caddy:
+    image: caddy:alpine
+    volumes:
+      - './caddy/Caddyfile.local:/etc/caddy/Caddyfile:ro'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - 443:443

@@ -16,3 +16,7 @@ sqlc: ## generate SQL methods
 .PHONY: install
 install: ## install dep
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
+.PHONY: run-fe
+run-fe: ## run dev server for fe
+	docker-compose -f deployments/docker-compose.fe.yaml up -d
