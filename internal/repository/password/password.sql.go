@@ -20,6 +20,11 @@ type CreateParams struct {
 	PasswordHash string `json:"passwordHash"`
 }
 
+// Create
+//
+//	INSERT INTO passwords (user_id, password_hash)
+//	VALUES (?, ?)
+//	RETURNING id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*Password, error) {
 	row := q.queryRow(ctx, q.createStmt, create, arg.UserID, arg.PasswordHash)
 	var i Password
@@ -43,6 +48,12 @@ WHERE user_id = ?
   AND deleted_at IS NULL
 `
 
+// GetByUserID
+//
+//	SELECT id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
+//	FROM passwords
+//	WHERE user_id = ?
+//	  AND deleted_at IS NULL
 func (q *Queries) GetByUserID(ctx context.Context, userID int64) (*Password, error) {
 	row := q.queryRow(ctx, q.getByUserIDStmt, getByUserID, userID)
 	var i Password
@@ -67,6 +78,13 @@ WHERE id = ?
 RETURNING id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
 `
 
+// IncreaseFailedAttempts
+//
+//	UPDATE passwords
+//	SET failed_attempts = failed_attempts + 1, updated_at = datetime('now')
+//	WHERE id = ?
+//	  AND deleted_at IS NULL
+//	RETURNING id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
 func (q *Queries) IncreaseFailedAttempts(ctx context.Context, id int64) (*Password, error) {
 	row := q.queryRow(ctx, q.increaseFailedAttemptsStmt, increaseFailedAttempts, id)
 	var i Password
@@ -91,6 +109,13 @@ WHERE id = ?
 RETURNING id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
 `
 
+// ResetFailedAttempts
+//
+//	UPDATE passwords
+//	SET failed_attempts = 0, updated_at = datetime('now')
+//	WHERE id = ?
+//	  AND deleted_at IS NULL
+//	RETURNING id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
 func (q *Queries) ResetFailedAttempts(ctx context.Context, id int64) (*Password, error) {
 	row := q.queryRow(ctx, q.resetFailedAttemptsStmt, resetFailedAttempts, id)
 	var i Password
@@ -120,6 +145,13 @@ type UpdateParams struct {
 	ID           int64  `json:"id"`
 }
 
+// Update
+//
+//	UPDATE passwords
+//	SET password_hash = ?, updated_at = datetime('now')
+//	WHERE id = ?
+//	  AND deleted_at IS NULL
+//	RETURNING id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
 func (q *Queries) Update(ctx context.Context, arg UpdateParams) (*Password, error) {
 	row := q.queryRow(ctx, q.updateStmt, update, arg.PasswordHash, arg.ID)
 	var i Password

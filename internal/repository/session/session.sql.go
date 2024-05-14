@@ -22,6 +22,13 @@ type CreateOrUpdateParams struct {
 	SessionHash string `json:"sessionHash"`
 }
 
+// CreateOrUpdate
+//
+//	INSERT INTO sessions (user_id, session_hash)
+//	VALUES (?, ?)
+//	ON CONFLICT (user_id) DO UPDATE
+//	SET session_hash = excluded.session_hash, updated_at = datetime('now'), deleted_at = NULL
+//	RETURNING id, user_id, session_hash, created_at, updated_at, deleted_at
 func (q *Queries) CreateOrUpdate(ctx context.Context, arg CreateOrUpdateParams) (*Session, error) {
 	row := q.queryRow(ctx, q.createOrUpdateStmt, createOrUpdate, arg.UserID, arg.SessionHash)
 	var i Session
@@ -43,6 +50,12 @@ WHERE id = ?
   AND deleted_at IS NULL
 `
 
+// DeleteByID
+//
+//	UPDATE sessions
+//	SET deleted_at = datetime('now')
+//	WHERE id = ?
+//	  AND deleted_at IS NULL
 func (q *Queries) DeleteByID(ctx context.Context, id int64) error {
 	_, err := q.exec(ctx, q.deleteByIDStmt, deleteByID, id)
 	return err
@@ -55,6 +68,12 @@ WHERE session_hash = ?
   AND deleted_at IS NULL
 `
 
+// GetByUserID
+//
+//	SELECT id, user_id, session_hash, created_at, updated_at, deleted_at
+//	FROM sessions
+//	WHERE session_hash = ?
+//	  AND deleted_at IS NULL
 func (q *Queries) GetByUserID(ctx context.Context, sessionHash string) (*Session, error) {
 	row := q.queryRow(ctx, q.getByUserIDStmt, getByUserID, sessionHash)
 	var i Session

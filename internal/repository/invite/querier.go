@@ -9,12 +9,59 @@ import (
 )
 
 type Querier interface {
+	//Activate
+	//
+	//  UPDATE invites
+	//  SET is_activated = true
+	//  WHERE id = ?
+	//    AND is_activated IS FALSE
+	//    AND deleted_at IS NULL
+	//  RETURNING id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
 	Activate(ctx context.Context, id int64) (*Invite, error)
+	//CreateOrUpdate
+	//
+	//  INSERT INTO invites (user_id, invite_hash, is_activated)
+	//  VALUES (?, ?, false)
+	//  ON CONFLICT (user_id, is_activated) WHERE is_activated IS FALSE DO UPDATE
+	//  SET invite_hash = excluded.invite_hash, updated_at = datetime('now')
+	//  RETURNING id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
 	CreateOrUpdate(ctx context.Context, arg CreateOrUpdateParams) (*Invite, error)
+	//Delete
+	//
+	//  UPDATE invites
+	//  SET deleted_at = datetime('now'), is_activated = true
+	//  WHERE id = ?
+	//    AND deleted_at IS NULL
 	Delete(ctx context.Context, id int64) error
+	//GetActiveByUserID
+	//
+	//  SELECT id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
+	//  FROM invites
+	//  WHERE id = ?
+	//    AND is_activated IS FALSE
+	//    AND deleted_at IS NULL
 	GetActiveByUserID(ctx context.Context, id int64) (*Invite, error)
+	//GetAllByUserID
+	//
+	//  SELECT id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
+	//  FROM invites
+	//  WHERE user_id = ?
+	//    AND deleted_at IS NULL
 	GetAllByUserID(ctx context.Context, userID int64) ([]*Invite, error)
+	//GetByID
+	//
+	//  SELECT id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
+	//  FROM invites
+	//  WHERE id = ?
+	//    AND deleted_at IS NULL
 	GetByID(ctx context.Context, id int64) (*Invite, error)
+	//GetByInviteHash
+	//
+	//  SELECT id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
+	//  FROM invites
+	//  WHERE invite_hash = ?
+	//    AND is_activated IS FALSE
+	//    AND deleted_at IS NULL
 	GetByInviteHash(ctx context.Context, inviteHash string) (*Invite, error)
 }
 

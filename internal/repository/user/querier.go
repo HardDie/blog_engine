@@ -9,10 +9,40 @@ import (
 )
 
 type Querier interface {
+	//Create
+	//
+	//  INSERT INTO users (username, displayed_name, invited_by_user)
+	//  VALUES (?, ?, ?)
+	//  RETURNING id, username, displayed_name, email, invited_by_user, created_at, updated_at, deleted_at
 	Create(ctx context.Context, arg CreateParams) (*User, error)
+	//GetByIDPrivate
+	//
+	//  SELECT id, username, displayed_name, email, invited_by_user, created_at, updated_at, deleted_at
+	//  FROM users
+	//  WHERE id = ?
+	//    AND deleted_at IS NULL
 	GetByIDPrivate(ctx context.Context, id int64) (*User, error)
+	//GetByIDPublic
+	//
+	//  SELECT id, displayed_name, invited_by_user, created_at, updated_at, deleted_at
+	//  FROM users
+	//  WHERE id = ?
+	//    AND deleted_at IS NULL
 	GetByIDPublic(ctx context.Context, id int64) (*GetByIDPublicRow, error)
+	//GetByName
+	//
+	//  SELECT id, username, displayed_name, email, invited_by_user, created_at, updated_at, deleted_at
+	//  FROM users
+	//  WHERE username = ?
+	//    AND deleted_at IS NULL
 	GetByName(ctx context.Context, username string) (*User, error)
+	//Update
+	//
+	//  UPDATE users
+	//  SET displayed_name = ?, email = ?, updated_at = datetime('now')
+	//  WHERE id = ?
+	//    AND deleted_at IS NULL
+	//  RETURNING id, username, displayed_name, email, invited_by_user, created_at, updated_at, deleted_at
 	Update(ctx context.Context, arg UpdateParams) (*User, error)
 }
 

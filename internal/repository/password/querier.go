@@ -9,10 +9,42 @@ import (
 )
 
 type Querier interface {
+	//Create
+	//
+	//  INSERT INTO passwords (user_id, password_hash)
+	//  VALUES (?, ?)
+	//  RETURNING id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
 	Create(ctx context.Context, arg CreateParams) (*Password, error)
+	//GetByUserID
+	//
+	//  SELECT id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
+	//  FROM passwords
+	//  WHERE user_id = ?
+	//    AND deleted_at IS NULL
 	GetByUserID(ctx context.Context, userID int64) (*Password, error)
+	//IncreaseFailedAttempts
+	//
+	//  UPDATE passwords
+	//  SET failed_attempts = failed_attempts + 1, updated_at = datetime('now')
+	//  WHERE id = ?
+	//    AND deleted_at IS NULL
+	//  RETURNING id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
 	IncreaseFailedAttempts(ctx context.Context, id int64) (*Password, error)
+	//ResetFailedAttempts
+	//
+	//  UPDATE passwords
+	//  SET failed_attempts = 0, updated_at = datetime('now')
+	//  WHERE id = ?
+	//    AND deleted_at IS NULL
+	//  RETURNING id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
 	ResetFailedAttempts(ctx context.Context, id int64) (*Password, error)
+	//Update
+	//
+	//  UPDATE passwords
+	//  SET password_hash = ?, updated_at = datetime('now')
+	//  WHERE id = ?
+	//    AND deleted_at IS NULL
+	//  RETURNING id, user_id, password_hash, failed_attempts, created_at, updated_at, deleted_at, blocked_at
 	Update(ctx context.Context, arg UpdateParams) (*Password, error)
 }
 

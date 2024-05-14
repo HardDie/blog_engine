@@ -18,6 +18,14 @@ WHERE id = ?
 RETURNING id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
 `
 
+// Activate
+//
+//	UPDATE invites
+//	SET is_activated = true
+//	WHERE id = ?
+//	  AND is_activated IS FALSE
+//	  AND deleted_at IS NULL
+//	RETURNING id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
 func (q *Queries) Activate(ctx context.Context, id int64) (*Invite, error) {
 	row := q.queryRow(ctx, q.activateStmt, activate, id)
 	var i Invite
@@ -46,6 +54,13 @@ type CreateOrUpdateParams struct {
 	InviteHash string `json:"inviteHash"`
 }
 
+// CreateOrUpdate
+//
+//	INSERT INTO invites (user_id, invite_hash, is_activated)
+//	VALUES (?, ?, false)
+//	ON CONFLICT (user_id, is_activated) WHERE is_activated IS FALSE DO UPDATE
+//	SET invite_hash = excluded.invite_hash, updated_at = datetime('now')
+//	RETURNING id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
 func (q *Queries) CreateOrUpdate(ctx context.Context, arg CreateOrUpdateParams) (*Invite, error) {
 	row := q.queryRow(ctx, q.createOrUpdateStmt, createOrUpdate, arg.UserID, arg.InviteHash)
 	var i Invite
@@ -68,6 +83,12 @@ WHERE id = ?
   AND deleted_at IS NULL
 `
 
+// Delete
+//
+//	UPDATE invites
+//	SET deleted_at = datetime('now'), is_activated = true
+//	WHERE id = ?
+//	  AND deleted_at IS NULL
 func (q *Queries) Delete(ctx context.Context, id int64) error {
 	_, err := q.exec(ctx, q.deleteStmt, delete, id)
 	return err
@@ -81,6 +102,13 @@ WHERE id = ?
   AND deleted_at IS NULL
 `
 
+// GetActiveByUserID
+//
+//	SELECT id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
+//	FROM invites
+//	WHERE id = ?
+//	  AND is_activated IS FALSE
+//	  AND deleted_at IS NULL
 func (q *Queries) GetActiveByUserID(ctx context.Context, id int64) (*Invite, error) {
 	row := q.queryRow(ctx, q.getActiveByUserIDStmt, getActiveByUserID, id)
 	var i Invite
@@ -103,6 +131,12 @@ WHERE user_id = ?
   AND deleted_at IS NULL
 `
 
+// GetAllByUserID
+//
+//	SELECT id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
+//	FROM invites
+//	WHERE user_id = ?
+//	  AND deleted_at IS NULL
 func (q *Queries) GetAllByUserID(ctx context.Context, userID int64) ([]*Invite, error) {
 	rows, err := q.query(ctx, q.getAllByUserIDStmt, getAllByUserID, userID)
 	if err != nil {
@@ -141,6 +175,12 @@ WHERE id = ?
   AND deleted_at IS NULL
 `
 
+// GetByID
+//
+//	SELECT id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
+//	FROM invites
+//	WHERE id = ?
+//	  AND deleted_at IS NULL
 func (q *Queries) GetByID(ctx context.Context, id int64) (*Invite, error) {
 	row := q.queryRow(ctx, q.getByIDStmt, getByID, id)
 	var i Invite
@@ -164,6 +204,13 @@ WHERE invite_hash = ?
   AND deleted_at IS NULL
 `
 
+// GetByInviteHash
+//
+//	SELECT id, user_id, invite_hash, is_activated, created_at, updated_at, deleted_at
+//	FROM invites
+//	WHERE invite_hash = ?
+//	  AND is_activated IS FALSE
+//	  AND deleted_at IS NULL
 func (q *Queries) GetByInviteHash(ctx context.Context, inviteHash string) (*Invite, error) {
 	row := q.queryRow(ctx, q.getByInviteHashStmt, getByInviteHash, inviteHash)
 	var i Invite

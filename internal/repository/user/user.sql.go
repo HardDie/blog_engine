@@ -23,6 +23,11 @@ type CreateParams struct {
 	InvitedByUser int64  `json:"invitedByUser"`
 }
 
+// Create
+//
+//	INSERT INTO users (username, displayed_name, invited_by_user)
+//	VALUES (?, ?, ?)
+//	RETURNING id, username, displayed_name, email, invited_by_user, created_at, updated_at, deleted_at
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*User, error) {
 	row := q.queryRow(ctx, q.createStmt, create, arg.Username, arg.DisplayedName, arg.InvitedByUser)
 	var i User
@@ -46,6 +51,12 @@ WHERE id = ?
   AND deleted_at IS NULL
 `
 
+// GetByIDPrivate
+//
+//	SELECT id, username, displayed_name, email, invited_by_user, created_at, updated_at, deleted_at
+//	FROM users
+//	WHERE id = ?
+//	  AND deleted_at IS NULL
 func (q *Queries) GetByIDPrivate(ctx context.Context, id int64) (*User, error) {
 	row := q.queryRow(ctx, q.getByIDPrivateStmt, getByIDPrivate, id)
 	var i User
@@ -78,6 +89,12 @@ type GetByIDPublicRow struct {
 	DeletedAt     sql.NullTime `json:"deletedAt"`
 }
 
+// GetByIDPublic
+//
+//	SELECT id, displayed_name, invited_by_user, created_at, updated_at, deleted_at
+//	FROM users
+//	WHERE id = ?
+//	  AND deleted_at IS NULL
 func (q *Queries) GetByIDPublic(ctx context.Context, id int64) (*GetByIDPublicRow, error) {
 	row := q.queryRow(ctx, q.getByIDPublicStmt, getByIDPublic, id)
 	var i GetByIDPublicRow
@@ -99,6 +116,12 @@ WHERE username = ?
   AND deleted_at IS NULL
 `
 
+// GetByName
+//
+//	SELECT id, username, displayed_name, email, invited_by_user, created_at, updated_at, deleted_at
+//	FROM users
+//	WHERE username = ?
+//	  AND deleted_at IS NULL
 func (q *Queries) GetByName(ctx context.Context, username string) (*User, error) {
 	row := q.queryRow(ctx, q.getByNameStmt, getByName, username)
 	var i User
@@ -129,6 +152,13 @@ type UpdateParams struct {
 	ID            int64          `json:"id"`
 }
 
+// Update
+//
+//	UPDATE users
+//	SET displayed_name = ?, email = ?, updated_at = datetime('now')
+//	WHERE id = ?
+//	  AND deleted_at IS NULL
+//	RETURNING id, username, displayed_name, email, invited_by_user, created_at, updated_at, deleted_at
 func (q *Queries) Update(ctx context.Context, arg UpdateParams) (*User, error) {
 	row := q.queryRow(ctx, q.updateStmt, update, arg.DisplayedName, arg.Email, arg.ID)
 	var i User

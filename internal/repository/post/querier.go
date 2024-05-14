@@ -9,9 +9,40 @@ import (
 )
 
 type Querier interface {
+	//Create
+	//
+	//  INSERT INTO posts (user_id, title, short, body, tags, is_published)
+	//  VALUES (?, ?, ?, ?, ?, ?)
+	//  RETURNING id, user_id, title, short, body, tags, is_published, created_at, updated_at, deleted_at
 	Create(ctx context.Context, arg CreateParams) (*Post, error)
+	//Edit
+	//
+	//  UPDATE posts
+	//  SET title = ?, short = ?, body = ?, tags = ?, is_published = ?, updated_at = datetime('now')
+	//  WHERE id = ?
+	//    AND deleted_at IS NULL
+	//    AND user_id = ?
+	//  RETURNING id, user_id, title, short, body, tags, is_published, created_at, updated_at, deleted_at
 	Edit(ctx context.Context, arg EditParams) (*Post, error)
+	//GetByID
+	//
+	//  SELECT id, user_id, title, short, body, tags, is_published, created_at, updated_at, deleted_at
+	//  FROM posts
+	//  WHERE deleted_at IS NULL
+	//    AND id = ?
+	//    AND CASE WHEN CAST(?2 AS int) IS NULL THEN is_published IS TRUE ELSE user_id = ?2 END
 	GetByID(ctx context.Context, arg GetByIDParams) (*Post, error)
+	//List
+	//
+	//  SELECT posts.id, posts.user_id, posts.title, posts.short, posts.body, posts.tags, posts.is_published, posts.created_at, posts.updated_at, posts.deleted_at, count(*) over()
+	//  FROM posts
+	//  WHERE deleted_at IS NULL
+	//    AND CASE WHEN CAST(?1 AS boolean) IS TRUE THEN is_published IS true ELSE true END
+	//    AND CASE WHEN CAST(?2 AS text) <> '' THEN lower(title) LIKE ?2 ELSE true END
+	//    AND CASE WHEN CAST(?3 AS int) > 0 THEN user_id = ?3 ELSE true END
+	//  ORDER BY id DESC
+	//  LIMIT CASE WHEN CAST(?5 AS int) > 0 THEN ?5 ELSE 10 END
+	//  OFFSET ?4
 	List(ctx context.Context, arg ListParams) ([]*ListRow, error)
 }
 
