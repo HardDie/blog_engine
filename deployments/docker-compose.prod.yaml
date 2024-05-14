@@ -1,0 +1,31 @@
+version: '3.0'
+
+networks:
+  app-net:
+    driver: bridge
+
+services:
+  app:
+    build:
+      context: ../
+      dockerfile: ./deployments/Dockerfile
+    restart: always
+    env_file:
+      - ../.env
+    networks:
+      - app-net
+  caddy:
+    build:
+      context: ./caddy/
+      dockerfile: ./deployments/Dockerfile
+    restart: always
+    env_file:
+      - ../.env
+    volumes:
+      - './caddy/Caddyfile:/etc/caddy/Caddyfile:ro'
+      - '/$HOME/data/blog/caddy/data:/data'
+      - '/$HOME/data/blog/caddy/config:/config'
+    ports:
+      - 443:443
+    networks:
+      - app-net
