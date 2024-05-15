@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package gateway;
+
+option go_package = "github.com/HardDie/mmr_boost_server/pkg/server";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service Invite
+{
+    // Generate a new invitation code
+    rpc Generate(google.protobuf.Empty) returns (GenerateResponse)
+    {
+        option (google.api.http) = {
+            post : "/api/v1/invites/generate"
+        };
+    }
+    // Revoke the generated invitation code
+    rpc Revoke(google.protobuf.Empty) returns (google.protobuf.Empty)
+    {
+        option (google.api.http) = {
+            delete : "/api/v1/invites/revoke"
+        };
+    }
+}
+
+// Request/Response
+
+message GenerateResponse
+{
+    string data = 1;
+}
