@@ -17,20 +17,20 @@ type Querier interface {
 	//  SET session_hash = excluded.session_hash, updated_at = datetime('now'), deleted_at = NULL
 	//  RETURNING id, user_id, session_hash, created_at, updated_at, deleted_at
 	CreateOrUpdate(ctx context.Context, arg CreateOrUpdateParams) (*Session, error)
-	//DeleteByID
+	//DeleteBySessionHash
 	//
 	//  UPDATE sessions
 	//  SET deleted_at = datetime('now')
-	//  WHERE id = ?
+	//  WHERE session_hash = ?
 	//    AND deleted_at IS NULL
-	DeleteByID(ctx context.Context, id int64) error
-	//GetByUserID
+	DeleteBySessionHash(ctx context.Context, sessionHash string) error
+	//GetBySessionHash
 	//
 	//  SELECT id, user_id, session_hash, created_at, updated_at, deleted_at
 	//  FROM sessions
 	//  WHERE session_hash = ?
 	//    AND deleted_at IS NULL
-	GetByUserID(ctx context.Context, sessionHash string) (*Session, error)
+	GetBySessionHash(ctx context.Context, sessionHash string) (*Session, error)
 }
 
 var _ Querier = (*Queries)(nil)

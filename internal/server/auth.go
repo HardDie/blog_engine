@@ -251,7 +251,7 @@ func (s *Auth) Logout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	session := utils.GetSessionFromContext(ctx)
 
-	err := s.authService.Logout(ctx, session.ID)
+	err := s.authService.Logout(ctx, session.SessionHash)
 	if err != nil {
 		logger.Error.Printf("Auth.Logout() Logout: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

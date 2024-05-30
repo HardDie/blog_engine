@@ -43,39 +43,39 @@ func (q *Queries) CreateOrUpdate(ctx context.Context, arg CreateOrUpdateParams) 
 	return &i, err
 }
 
-const deleteByID = `-- name: DeleteByID :exec
+const deleteBySessionHash = `-- name: DeleteBySessionHash :exec
 UPDATE sessions
 SET deleted_at = datetime('now')
-WHERE id = ?
+WHERE session_hash = ?
   AND deleted_at IS NULL
 `
 
-// DeleteByID
+// DeleteBySessionHash
 //
 //	UPDATE sessions
 //	SET deleted_at = datetime('now')
-//	WHERE id = ?
+//	WHERE session_hash = ?
 //	  AND deleted_at IS NULL
-func (q *Queries) DeleteByID(ctx context.Context, id int64) error {
-	_, err := q.exec(ctx, q.deleteByIDStmt, deleteByID, id)
+func (q *Queries) DeleteBySessionHash(ctx context.Context, sessionHash string) error {
+	_, err := q.exec(ctx, q.deleteBySessionHashStmt, deleteBySessionHash, sessionHash)
 	return err
 }
 
-const getByUserID = `-- name: GetByUserID :one
+const getBySessionHash = `-- name: GetBySessionHash :one
 SELECT id, user_id, session_hash, created_at, updated_at, deleted_at
 FROM sessions
 WHERE session_hash = ?
   AND deleted_at IS NULL
 `
 
-// GetByUserID
+// GetBySessionHash
 //
 //	SELECT id, user_id, session_hash, created_at, updated_at, deleted_at
 //	FROM sessions
 //	WHERE session_hash = ?
 //	  AND deleted_at IS NULL
-func (q *Queries) GetByUserID(ctx context.Context, sessionHash string) (*Session, error) {
-	row := q.queryRow(ctx, q.getByUserIDStmt, getByUserID, sessionHash)
+func (q *Queries) GetBySessionHash(ctx context.Context, sessionHash string) (*Session, error) {
+	row := q.queryRow(ctx, q.getBySessionHashStmt, getBySessionHash, sessionHash)
 	var i Session
 	err := row.Scan(
 		&i.ID,

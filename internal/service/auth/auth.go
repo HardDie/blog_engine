@@ -22,7 +22,7 @@ import (
 type IAuth interface {
 	Register(ctx context.Context, req *dto.RegisterDTO) (*entity.User, error)
 	Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, error)
-	Logout(ctx context.Context, sessionID int64) error
+	Logout(ctx context.Context, sessionHash string) error
 	GenerateCookie(ctx context.Context, userID int64) (string, error)
 	ValidateCookie(ctx context.Context, session string) (*entity.Session, error)
 	GetUserInfo(ctx context.Context, userID int64) (*entity.User, error)
@@ -195,8 +195,8 @@ func (s *Auth) Login(ctx context.Context, req *dto.LoginDTO) (*entity.User, erro
 	}
 	return user, nil
 }
-func (s *Auth) Logout(ctx context.Context, sessionID int64) error {
-	err := s.sessionRepository.DeleteByID(ctx, sessionID)
+func (s *Auth) Logout(ctx context.Context, sessionHash string) error {
+	err := s.sessionRepository.DeleteBySessionHash(ctx, sessionHash)
 	if err != nil {
 		return fmt.Errorf("Auth.Logout() DeleteByID: %w", err)
 	}
@@ -223,7 +223,7 @@ func (s *Auth) GenerateCookie(ctx context.Context, userID int64) (string, error)
 func (s *Auth) ValidateCookie(ctx context.Context, sessionToken string) (*entity.Session, error) {
 	// Check if session exist
 	sessionHash := utils.HashSha256(sessionToken)
-	resp, err := s.sessionRepository.GetByUserID(ctx, sessionHash)
+	resp, err := s.sessionRepository.GetBySessionHash(ctx, sessionHash)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

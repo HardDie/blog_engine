@@ -27,11 +27,11 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createOrUpdateStmt, err = db.PrepareContext(ctx, createOrUpdate); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateOrUpdate: %w", err)
 	}
-	if q.deleteByIDStmt, err = db.PrepareContext(ctx, deleteByID); err != nil {
-		return nil, fmt.Errorf("error preparing query DeleteByID: %w", err)
+	if q.deleteBySessionHashStmt, err = db.PrepareContext(ctx, deleteBySessionHash); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteBySessionHash: %w", err)
 	}
-	if q.getByUserIDStmt, err = db.PrepareContext(ctx, getByUserID); err != nil {
-		return nil, fmt.Errorf("error preparing query GetByUserID: %w", err)
+	if q.getBySessionHashStmt, err = db.PrepareContext(ctx, getBySessionHash); err != nil {
+		return nil, fmt.Errorf("error preparing query GetBySessionHash: %w", err)
 	}
 	return &q, nil
 }
@@ -43,14 +43,14 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createOrUpdateStmt: %w", cerr)
 		}
 	}
-	if q.deleteByIDStmt != nil {
-		if cerr := q.deleteByIDStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing deleteByIDStmt: %w", cerr)
+	if q.deleteBySessionHashStmt != nil {
+		if cerr := q.deleteBySessionHashStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteBySessionHashStmt: %w", cerr)
 		}
 	}
-	if q.getByUserIDStmt != nil {
-		if cerr := q.getByUserIDStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getByUserIDStmt: %w", cerr)
+	if q.getBySessionHashStmt != nil {
+		if cerr := q.getBySessionHashStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getBySessionHashStmt: %w", cerr)
 		}
 	}
 	return err
@@ -90,19 +90,19 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                 DBTX
-	tx                 *sql.Tx
-	createOrUpdateStmt *sql.Stmt
-	deleteByIDStmt     *sql.Stmt
-	getByUserIDStmt    *sql.Stmt
+	db                      DBTX
+	tx                      *sql.Tx
+	createOrUpdateStmt      *sql.Stmt
+	deleteBySessionHashStmt *sql.Stmt
+	getBySessionHashStmt    *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                 tx,
-		tx:                 tx,
-		createOrUpdateStmt: q.createOrUpdateStmt,
-		deleteByIDStmt:     q.deleteByIDStmt,
-		getByUserIDStmt:    q.getByUserIDStmt,
+		db:                      tx,
+		tx:                      tx,
+		createOrUpdateStmt:      q.createOrUpdateStmt,
+		deleteBySessionHashStmt: q.deleteBySessionHashStmt,
+		getBySessionHashStmt:    q.getBySessionHashStmt,
 	}
 }
