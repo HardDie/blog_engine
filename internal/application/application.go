@@ -7,14 +7,15 @@ import (
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/mux"
 
+	"github.com/HardDie/blog_engine/internal/boltdb"
 	"github.com/HardDie/blog_engine/internal/config"
 	"github.com/HardDie/blog_engine/internal/db"
 	"github.com/HardDie/blog_engine/internal/middleware"
 	"github.com/HardDie/blog_engine/internal/migration"
+	repositorySession "github.com/HardDie/blog_engine/internal/repository/boltdb/session"
 	repositoryInvite "github.com/HardDie/blog_engine/internal/repository/invite"
 	repositoryPassword "github.com/HardDie/blog_engine/internal/repository/password"
 	repositoryPost "github.com/HardDie/blog_engine/internal/repository/post"
-	repositorySession "github.com/HardDie/blog_engine/internal/repository/session"
 	repositoryUser "github.com/HardDie/blog_engine/internal/repository/user"
 	"github.com/HardDie/blog_engine/internal/server"
 	serviceAuth "github.com/HardDie/blog_engine/internal/service/auth"
@@ -49,6 +50,10 @@ func Get() (*Application, error) {
 		return nil, err
 	}
 	app.DB = newDB
+	boltDB, err := boltdb.Get(app.Cfg.SessionsDBPath)
+	if err != nil {
+		return nil, err
+	}
 
 	// Init migrations
 	err = migration.NewMigrate(app.DB).Up()
@@ -63,7 +68,7 @@ func Get() (*Application, error) {
 	// Init repositories
 	userRepository := repositoryUser.New(app.DB)
 	passwordRepository := repositoryPassword.New(app.DB)
-	sessionRepository := repositorySession.New(app.DB)
+	sessionRepository := repositorySession.New(boltDB)
 	inviteRepository := repositoryInvite.New(app.DB)
 	postRepository := repositoryPost.New(app.DB)
 

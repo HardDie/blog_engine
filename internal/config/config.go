@@ -11,6 +11,7 @@ import (
 
 type Config struct {
 	DBPath         string
+	SessionsDBPath string
 	Port           string
 	PwdMaxAttempts int
 	PwdBlockTime   int
@@ -26,6 +27,7 @@ func Get() *Config {
 
 	return &Config{
 		DBPath:         getEnv("DB_PATH", "blog.db"),
+		SessionsDBPath: getEnv("SESSIONS_DB_PATH", "blog_sessions.db"),
 		Port:           getEnv("PORT", ":8080"),
 		PwdMaxAttempts: getEnvAsInt("PWD_MAX_ATTEMPTS", 5),
 		PwdBlockTime:   getEnvAsInt("PWD_BLOCK_TIME", 24),

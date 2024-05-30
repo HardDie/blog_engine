@@ -12,9 +12,10 @@ import (
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
 	"github.com/HardDie/blog_engine/internal/logger"
+	"github.com/HardDie/blog_engine/internal/models"
+	repositorySession "github.com/HardDie/blog_engine/internal/repository/boltdb/session"
 	repositoryInvite "github.com/HardDie/blog_engine/internal/repository/invite"
 	repositoryPassword "github.com/HardDie/blog_engine/internal/repository/password"
-	repositorySession "github.com/HardDie/blog_engine/internal/repository/session"
 	repositoryUser "github.com/HardDie/blog_engine/internal/repository/user"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
@@ -28,10 +29,16 @@ type IAuth interface {
 	GetUserInfo(ctx context.Context, userID int64) (*entity.User, error)
 }
 
+type Session interface {
+	CreateOrUpdate(_ context.Context, userID int64, sessionHash string) (*models.Session, error)
+	DeleteBySessionHash(_ context.Context, sessionHash string) error
+	GetBySessionHash(_ context.Context, sessionHash string) (*models.Session, error)
+}
+
 type Auth struct {
 	userRepository     repositoryUser.Querier
 	passwordRepository repositoryPassword.Querier
-	sessionRepository  repositorySession.Querier
+	sessionRepository  Session
 	inviteRepository   repositoryInvite.Querier
 
 	cfg   *config.Config
@@ -42,7 +49,7 @@ func New(
 	cfg *config.Config,
 	user repositoryUser.Querier,
 	password repositoryPassword.Querier,
-	session repositorySession.Querier,
+	session Session,
 	invite repositoryInvite.Querier,
 ) *Auth {
 	return &Auth{
@@ -210,10 +217,7 @@ func (s *Auth) GenerateCookie(ctx context.Context, userID int64) (string, error)
 	}
 
 	// Write session to DB
-	_, err = s.sessionRepository.CreateOrUpdate(ctx, repositorySession.CreateOrUpdateParams{
-		UserID:      userID,
-		SessionHash: utils.HashSha256(sessionKey),
-	})
+	_, err = s.sessionRepository.CreateOrUpdate(ctx, userID, utils.HashSha256(sessionKey))
 	if err != nil {
 		return "", fmt.Errorf("Auth.GenerateCookie() CreateOrUpdate: %w", err)
 	}
@@ -226,21 +230,19 @@ func (s *Auth) ValidateCookie(ctx context.Context, sessionToken string) (*entity
 	resp, err := s.sessionRepository.GetBySessionHash(ctx, sessionHash)
 	if err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, repositorySession.ErrorNotFound):
 			return nil, ErrorSessionNotFound
 		}
 		return nil, fmt.Errorf("Auth.ValidateCookie() GetyByUserID: %w", err)
 	}
 	session := &entity.Session{
-		ID:          resp.ID,
 		UserID:      resp.UserID,
 		SessionHash: resp.SessionHash,
 		CreatedAt:   resp.CreatedAt,
-		UpdatedAt:   resp.UpdatedAt,
 	}
 
 	// Check if session is not expired
-	if time.Now().Sub(session.UpdatedAt) > time.Hour*24 {
+	if time.Now().Sub(session.CreatedAt) > time.Hour*24 {
 		return nil, ErrorSessionHasExpired
 	}
 	return session, nil
