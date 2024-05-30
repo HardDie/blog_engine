@@ -13,6 +13,7 @@ sqlc: ## generate SQL methods
 install: ## install dep
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	go install github.com/daixiang0/gci@latest
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.59.0
 
 .PHONY: run-fe
 run-fe: ## run dev server for fe
@@ -45,3 +46,8 @@ proto: ## generate go files from *.proto
 format: ## format code and imports
 	go fmt ./...
 	gci write -s standard -s default -s 'prefix(github.com/HardDie)' -s localmodule --skip-generated .
+
+
+.PHONY: lint
+lint: ## run linter
+	golangci-lint run --out-format=tab
