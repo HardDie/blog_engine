@@ -14,9 +14,9 @@ import (
 	"github.com/HardDie/blog_engine/internal/logger"
 	"github.com/HardDie/blog_engine/internal/models"
 	repositorySession "github.com/HardDie/blog_engine/internal/repository/boltdb/session"
-	repositoryInvite "github.com/HardDie/blog_engine/internal/repository/invite"
-	repositoryPassword "github.com/HardDie/blog_engine/internal/repository/password"
-	repositoryUser "github.com/HardDie/blog_engine/internal/repository/user"
+	repositoryInvite "github.com/HardDie/blog_engine/internal/repository/sqlite/invite"
+	repositoryPassword "github.com/HardDie/blog_engine/internal/repository/sqlite/password"
+	repositoryUser "github.com/HardDie/blog_engine/internal/repository/sqlite/user"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 

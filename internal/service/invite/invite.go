@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	repositoryInvite "github.com/HardDie/blog_engine/internal/repository/invite"
+	repositoryInvite "github.com/HardDie/blog_engine/internal/repository/sqlite/invite"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 

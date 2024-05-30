@@ -9,8 +9,8 @@ import (
 
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
-	repositoryPost "github.com/HardDie/blog_engine/internal/repository/post"
-	repositoryUser "github.com/HardDie/blog_engine/internal/repository/user"
+	repositoryPost "github.com/HardDie/blog_engine/internal/repository/sqlite/post"
+	repositoryUser "github.com/HardDie/blog_engine/internal/repository/sqlite/user"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 

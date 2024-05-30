@@ -8,8 +8,8 @@ import (
 
 	"github.com/HardDie/blog_engine/internal/dto"
 	"github.com/HardDie/blog_engine/internal/entity"
-	repositoryPassword "github.com/HardDie/blog_engine/internal/repository/password"
-	repositoryUser "github.com/HardDie/blog_engine/internal/repository/user"
+	repositoryPassword "github.com/HardDie/blog_engine/internal/repository/sqlite/password"
+	repositoryUser "github.com/HardDie/blog_engine/internal/repository/sqlite/user"
 	"github.com/HardDie/blog_engine/internal/utils"
 )
 

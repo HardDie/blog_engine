@@ -1,12 +1,12 @@
 version: "2"
 sql:
   - engine: "sqlite"
-    queries: "internal/repository/invite"
+    queries: "internal/repository/sqlite/invite"
     schema: "migrations"
     gen:
       go:
         package: "invite"
-        out: "internal/repository/invite"
+        out: "internal/repository/sqlite/invite"
         emit_empty_slices: true
         emit_json_tags: true
         emit_result_struct_pointers: true
@@ -20,12 +20,12 @@ sql:
     rules:
       - sqlc/db-prepare
   - engine: "sqlite"
-    queries: "internal/repository/password"
+    queries: "internal/repository/sqlite/password"
     schema: "migrations"
     gen:
       go:
         package: "password"
-        out: "internal/repository/password"
+        out: "internal/repository/sqlite/password"
         emit_empty_slices: true
         emit_json_tags: true
         emit_result_struct_pointers: true
@@ -39,12 +39,12 @@ sql:
     rules:
       - sqlc/db-prepare
   - engine: "sqlite"
-    queries: "internal/repository/post"
+    queries: "internal/repository/sqlite/post"
     schema: "migrations"
     gen:
       go:
         package: "post"
-        out: "internal/repository/post"
+        out: "internal/repository/sqlite/post"
         emit_empty_slices: true
         emit_json_tags: true
         emit_result_struct_pointers: true
@@ -58,31 +58,12 @@ sql:
     rules:
       - sqlc/db-prepare
   - engine: "sqlite"
-    queries: "internal/repository/session"
-    schema: "migrations"
-    gen:
-      go:
-        package: "session"
-        out: "internal/repository/session"
-        emit_empty_slices: true
-        emit_json_tags: true
-        emit_result_struct_pointers: true
-        omit_unused_structs: true
-        emit_interface: true
-        emit_prepared_queries: true
-        json_tags_case_style: camel
-        emit_sql_as_comment: true
-    database:
-      uri: "blog.db"
-    rules:
-      - sqlc/db-prepare
-  - engine: "sqlite"
-    queries: "internal/repository/user"
+    queries: "internal/repository/sqlite/user"
     schema: "migrations"
     gen:
       go:
         package: "user"
-        out: "internal/repository/user"
+        out: "internal/repository/sqlite/user"
         emit_empty_slices: true
         emit_json_tags: true
         emit_result_struct_pointers: true
