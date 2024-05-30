@@ -12,6 +12,7 @@ sqlc: ## generate SQL methods
 .PHONY: install
 install: ## install dep
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+	go install github.com/daixiang0/gci@latest
 
 .PHONY: run-fe
 run-fe: ## run dev server for fe
@@ -38,3 +39,9 @@ proto: ## generate go files from *.proto
 		--openapiv2_out ./ \
 		--openapiv2_opt allow_merge=true,merge_file_name=api,omit_enum_default_value=true,output_format=yaml \
 		./pkg/proto/server/*.proto
+
+
+.PHONY: format
+format: ## format code and imports
+	go fmt ./...
+	gci write -s standard -s default -s 'prefix(github.com/HardDie)' -s localmodule --skip-generated .
